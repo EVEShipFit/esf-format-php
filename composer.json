@@ -1,0 +1,34 @@
+{
+    "name": "eveshipfit/esf-format",
+    "description": "Read and write esf/1, the plain-text format for EVE Online ship fits",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["eve-online", "fitting", "esf"],
+    "homepage": "https://github.com/EVEShipFit/esf-format-php",
+    "authors": [{"name": "EVEShipFit Team"}],
+    "require": {
+        "php": ">=8.2",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.5 || ^12.0"
+    },
+    "autoload": {
+        "psr-4": {"EveShipFit\\EsfFormat\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"EveShipFit\\EsfFormat\\Tests\\": "tests/"}
+    },
+    "scripts": {
+        "lint": [
+            "php-cs-fixer check --diff",
+            "phpstan analyse"
+        ],
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
