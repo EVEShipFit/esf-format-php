@@ -1,0 +1,69 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-progress
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Lint
+        run: composer lint
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ["8.2", "8.3", "8.4", "8.5"]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Check out esf-format
+        uses: actions/checkout@v7
+        with:
+          repository: EVEShipFit/esf-format
+          ref: v1.0
+          path: esf-format
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.3
+
+      - name: Install dependencies
+        run: composer install --no-progress
+
+      - name: Run the test cases
+        run: uv run --project esf-format/tools esf-test -- php tests/program.php
+
+      - name: Run the unit tests
+        run: vendor/bin/phpunit --coverage-text=coverage.txt
+
+      - name: Report coverage
+        run: |
+          cat coverage.txt
+          { echo '```'; cat coverage.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
