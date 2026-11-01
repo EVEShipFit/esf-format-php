@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EveShipFit\EsfFormat\Internal;
 
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 
 /**
  * A reader of Protocol Buffers records.
@@ -27,12 +27,12 @@ final class Reader
     }
 
     /**
-     * @throws EsfError
+     * @throws EsfException
      */
     public function take(int $n): string
     {
         if ($n < 0 || $n > $this->length - $this->pos) {
-            throw new EsfError('binary: not valid Protocol Buffers (cut short)');
+            throw new EsfException('binary: not valid Protocol Buffers (cut short)');
         }
         $out = substr($this->data, $this->pos, $n);
         $this->pos += $n;
@@ -42,14 +42,14 @@ final class Reader
     /**
      * A varint, as the signed 64-bit int with the same bits.
      *
-     * @throws EsfError
+     * @throws EsfException
      */
     public function varint(): int
     {
         $value = 0;
         for ($shift = 0; $shift < 64; $shift += 7) {
             if ($this->pos >= $this->length) {
-                throw new EsfError('binary: not valid Protocol Buffers (cut short)');
+                throw new EsfException('binary: not valid Protocol Buffers (cut short)');
             }
             $byte = ord($this->data[$this->pos++]);
             $value |= ($byte & 0x7F) << $shift;
@@ -57,12 +57,12 @@ final class Reader
                 return $value;
             }
         }
-        throw new EsfError('binary: not valid Protocol Buffers (varint is too long)');
+        throw new EsfException('binary: not valid Protocol Buffers (varint is too long)');
     }
 
     /**
      * @return array{int, int} field and wire type
-     * @throws EsfError
+     * @throws EsfException
      */
     public function key(): array
     {
@@ -71,13 +71,13 @@ final class Reader
         $wire = $key & 7;
         if ($field === 0 || $key < 0 || $key > 0xFFFFFFFF || $wire > Wire::I32) {
             $shown = sprintf('%u', $key);
-            throw new EsfError("binary: not valid Protocol Buffers (bad key {$shown})");
+            throw new EsfException("binary: not valid Protocol Buffers (bad key {$shown})");
         }
         return [$field, $wire];
     }
 
     /**
-     * @throws EsfError
+     * @throws EsfException
      */
     public function bytes(): string
     {
@@ -85,7 +85,7 @@ final class Reader
     }
 
     /**
-     * @throws EsfError
+     * @throws EsfException
      */
     public function double(): float
     {
@@ -95,7 +95,7 @@ final class Reader
     /**
      * Step over the value of a record that is not read.
      *
-     * @throws EsfError
+     * @throws EsfException
      */
     public function skip(int $field, int $wire): void
     {
@@ -110,12 +110,12 @@ final class Reader
         } elseif ($wire === Wire::SGROUP) {
             $this->skipGroup($field);
         } else {
-            throw new EsfError('binary: not valid Protocol Buffers (unmatched end group)');
+            throw new EsfException('binary: not valid Protocol Buffers (unmatched end group)');
         }
     }
 
     /**
-     * @throws EsfError
+     * @throws EsfException
      */
     private function skipGroup(int $field): void
     {
@@ -126,7 +126,7 @@ final class Reader
                 $open[] = $inner;
             } elseif ($wire === Wire::EGROUP) {
                 if (array_pop($open) !== $inner) {
-                    throw new EsfError('binary: not valid Protocol Buffers (unmatched end group)');
+                    throw new EsfException('binary: not valid Protocol Buffers (unmatched end group)');
                 }
             } else {
                 $this->skip($inner, $wire);

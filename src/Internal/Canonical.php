@@ -6,7 +6,7 @@ namespace EveShipFit\EsfFormat\Internal;
 
 use EveShipFit\EsfFormat\Catalog;
 use EveShipFit\EsfFormat\Entry;
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
 use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\Location;
@@ -54,7 +54,7 @@ final class Canonical
     }
 
     /**
-     * @throws EsfError
+     * @throws EsfException
      */
     public static function fit(Fit $fit, Catalog $catalog): CanonFit
     {
@@ -180,9 +180,9 @@ final class Canonical
                 $overrides[$attributeId] ??= [Lookup::attribute($catalog, $attributeId), $base];
             }
         }
+        $keys = array_map(static fn($o) => [Names::fold($o[0]->name), $o[0]->name], $overrides);
+        uksort($overrides, static fn($a, $b) => strcmp($keys[$a][0], $keys[$b][0]) ?: strcmp($keys[$a][1], $keys[$b][1]));
         $out->overrides = array_values($overrides);
-        usort($out->overrides, static fn($a, $b) => strcmp(Names::fold($a[0]->name), Names::fold($b[0]->name))
-            ?: strcmp($a[0]->name, $b[0]->name));
 
         if ($line->state !== null && $line->state !== self::defaultState($item)) {
             $out->state = $line->state;
@@ -201,7 +201,7 @@ final class Canonical
      *
      * @param list<array{bool, CanonLine}> $lines
      * @return list<CanonLine>
-     * @throws EsfError
+     * @throws EsfException
      */
     private static function collapse(array $lines): array
     {
@@ -212,7 +212,7 @@ final class Canonical
                 $prev = $last[1];
                 $prev->count = ($prev->count ?? 1) + ($line->count ?? 1);
                 if ($prev->count > Text::UINT32_MAX) {
-                    throw new EsfError("lines collapse into a count of {$prev->count}, which is too large");
+                    throw new EsfException("lines collapse into a count of {$prev->count}, which is too large");
                 }
                 continue;
             }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat\Tests;
 
 use EveShipFit\EsfFormat\Esf;
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -17,7 +17,7 @@ final class ConformanceTest extends TestCase
      */
     public static function cases(): iterable
     {
-        $root = dirname(getenv('ESF_CATALOG') ?: 'esf-format/tests/catalog.json');
+        $root = dirname(getenv('ESF_CATALOG') ?: __DIR__ . '/../esf-format/tests/catalog.json');
         foreach (['valid', 'invalid'] as $kind) {
             foreach (glob("{$root}/{$kind}/*", GLOB_ONLYDIR) ?: [] as $path) {
                 yield "{$kind}/" . basename($path) => [$path];
@@ -39,7 +39,7 @@ final class ConformanceTest extends TestCase
         $catalog = ApiTest::catalog();
         $input = self::input($path);
         if (str_contains($path, '/invalid/')) {
-            $this->expectException(EsfError::class);
+            $this->expectException(EsfException::class);
             Esf::load($input, $catalog);
             return;
         }

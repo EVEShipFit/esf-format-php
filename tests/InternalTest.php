@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat\Tests;
 
 use EveShipFit\EsfFormat\Esf;
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\Internal\Canonical;
 use EveShipFit\EsfFormat\Internal\Names;
 use EveShipFit\EsfFormat\Internal\Number;
@@ -23,6 +23,7 @@ final class InternalTest extends TestCase
         yield [1.5e-7, '0.00000015'];
         yield [-0.0, '0'];
         yield [0.1, '0.1'];
+        yield [2 ** -24, '0.00000005960464477539063'];
         yield [0.3, '0.3'];
         yield [123.456, '123.456'];
         yield [-2.5, '-2.5'];
@@ -47,6 +48,7 @@ final class InternalTest extends TestCase
         yield [10.0, 0.1, 100];
         yield [400.0, 0.0125, 32000];
         yield [1.0, 3.0, 0];
+        yield [1.0, 2 ** -24, 16777215];
         yield [1000.0, 1e5, 0];
         yield [1e300, 1e-300, PHP_INT_MAX];
     }
@@ -89,7 +91,7 @@ final class InternalTest extends TestCase
     #[DataProvider('invalidBinary')]
     public function testInvalidBinary(string $data, string $message): void
     {
-        $this->expectException(EsfError::class);
+        $this->expectException(EsfException::class);
         $this->expectExceptionMessage($message);
         Esf::load($data, ApiTest::catalog());
     }

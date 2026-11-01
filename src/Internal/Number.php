@@ -36,13 +36,17 @@ final class Number
      */
     public static function shortest(float $value): array
     {
-        $precision = 0;
-        do {
-            $text = sprintf("%.{$precision}e", $value);
-        } while ((float) $text !== $value && ++$precision < 17);
-        [$mantissa, $exponent] = explode('e', $text);
-        $digits = rtrim(str_replace('.', '', $mantissa), '0');
-        return [$digits, (int) $exponent - strlen($digits) + 1];
+        $precision = ini_set('serialize_precision', '-1');
+        try {
+            $text = var_export($value, true);
+        } finally {
+            ini_set('serialize_precision', (string) $precision);
+        }
+        [$mantissa, $exponent] = explode('E', $text) + [1 => '0'];
+        [$whole, $fraction] = explode('.', $mantissa) + [1 => ''];
+        $all = ltrim($whole . $fraction, '0');
+        $digits = rtrim($all, '0');
+        return [$digits, (int) $exponent - strlen($fraction) + strlen($all) - strlen($digits)];
     }
 
     /** floor(a / b) of the shortest decimals of two positive floats, at most PHP_INT_MAX. */

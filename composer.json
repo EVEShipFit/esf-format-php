@@ -7,7 +7,7 @@
     "homepage": "https://github.com/EVEShipFit/esf-format-php",
     "authors": [{"name": "EVEShipFit Team"}],
     "require": {
-        "php": ">=8.2",
+        "php": "^8.2",
         "ext-mbstring": "*"
     },
     "require-dev": {
@@ -26,6 +26,7 @@
             "php-cs-fixer check --diff",
             "phpstan analyse"
         ],
+        "fix": "php-cs-fixer fix",
         "test": "phpunit"
     },
     "config": {

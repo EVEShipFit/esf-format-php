@@ -8,7 +8,7 @@ use EveShipFit\EsfFormat\AttributeRecord;
 use EveShipFit\EsfFormat\Catalog;
 use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\Esf;
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\MutaplasmidCatalog;
@@ -35,7 +35,7 @@ final class ApiTest extends TestCase
 
     public static function catalog(): JsonCatalog
     {
-        return self::$catalog ??= new JsonCatalog(getenv('ESF_CATALOG') ?: 'esf-format/tests/catalog.json');
+        return self::$catalog ??= new JsonCatalog(getenv('ESF_CATALOG') ?: __DIR__ . '/../esf-format/tests/catalog.json');
     }
 
     private static function fit(Entry ...$entries): EsfFit
@@ -175,7 +175,7 @@ final class ApiTest extends TestCase
     #[DataProvider('invalidFits')]
     public function testSaveInvalid(array $fits, string $message): void
     {
-        $this->expectException(EsfError::class);
+        $this->expectException(EsfException::class);
         $this->expectExceptionMessage($message);
         Esf::save($fits, self::catalog());
     }
@@ -185,7 +185,7 @@ final class ApiTest extends TestCase
         try {
             Esf::save([self::fit(), self::fit(new Entry(self::AUTOCANNON), new Entry(999_999_999))], self::catalog());
             self::fail('no error');
-        } catch (EsfError $e) {
+        } catch (EsfException $e) {
             self::assertSame([2, 2, null], [$e->fitNumber, $e->entryNumber, $e->lineNumber]);
             self::assertStringStartsWith('fit 2, entry 2: ', $e->getMessage());
         }
@@ -196,7 +196,7 @@ final class ApiTest extends TestCase
         try {
             Esf::save([self::fit(), new EsfFit(self::RIFTER, mode: 999_999_999)], self::catalog());
             self::fail('no error');
-        } catch (EsfError $e) {
+        } catch (EsfException $e) {
             self::assertSame([2, null], [$e->fitNumber, $e->entryNumber]);
             self::assertStringStartsWith('fit 2: ', $e->getMessage());
         }
@@ -207,7 +207,7 @@ final class ApiTest extends TestCase
         try {
             Esf::load("%esf/1\nRifter\nNot A Type\n", self::catalog());
             self::fail('no error');
-        } catch (EsfError $e) {
+        } catch (EsfException $e) {
             self::assertSame(3, $e->lineNumber);
             self::assertSame("line 3: unknown type 'Not A Type'", $e->getMessage());
         }
@@ -246,7 +246,7 @@ final class ApiTest extends TestCase
     #[DataProvider('invalidDocuments')]
     public function testLoadInvalid(string $data, string $message): void
     {
-        $this->expectException(EsfError::class);
+        $this->expectException(EsfException::class);
         $this->expectExceptionMessage($message);
         Esf::load($data, self::catalog());
     }
@@ -263,7 +263,7 @@ final class ApiTest extends TestCase
     #[DataProvider('optionalLookups')]
     public function testCatalogWithoutOptionalLookups(string $line, string $message): void
     {
-        $this->expectException(EsfError::class);
+        $this->expectException(EsfException::class);
         $this->expectExceptionMessage($message);
         Esf::load("%esf/1\n{$line}\n", new MinimalCatalog(self::catalog()));
     }
@@ -290,7 +290,7 @@ final class ApiTest extends TestCase
     #[DataProvider('invalidBase64Url')]
     public function testInvalidBase64Url(string $encoded): void
     {
-        $this->expectException(EsfError::class);
+        $this->expectException(EsfException::class);
         Esf::fromBase64Url($encoded);
     }
 

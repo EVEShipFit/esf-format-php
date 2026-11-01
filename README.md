@@ -46,7 +46,7 @@ $data = Esf::fromBase64Url($url);
 
 `save()` and `saveBinary()` take entries in any order, and check every rule
 of the spec. `load()` returns fits in canonical form. All three throw
-`EsfError` when a rule is broken. It says where: `lineNumber` for text, or
+`EsfException` when a rule is broken. It says where: `lineNumber` for text, or
 `fitNumber` and `entryNumber` (counting from 1) for fits.
 
 ## Fits

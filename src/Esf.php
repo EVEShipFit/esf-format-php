@@ -26,12 +26,12 @@ final class Esf
      * Read a text or binary document, in canonical form.
      *
      * @return list<EsfFit>
-     * @throws EsfError
+     * @throws EsfException
      */
     public static function load(string $data, Catalog $catalog): array
     {
         if ($data === '') {
-            throw new EsfError('the document is empty');
+            throw new EsfException('the document is empty');
         }
         $fits = self::isText($data)
             ? self::canonical(Text::parse($data), $catalog)
@@ -43,7 +43,7 @@ final class Esf
      * Write fits as canonical text (§8).
      *
      * @param list<EsfFit> $fits
-     * @throws EsfError
+     * @throws EsfException
      */
     public static function save(array $fits, Catalog $catalog): string
     {
@@ -54,7 +54,7 @@ final class Esf
      * Write fits in the binary form (§10).
      *
      * @param list<EsfFit> $fits
-     * @throws EsfError
+     * @throws EsfException
      */
     public static function saveBinary(array $fits, Catalog $catalog): string
     {
@@ -70,13 +70,13 @@ final class Esf
     /**
      * The binary form from base64url without padding (§10.4).
      *
-     * @throws EsfError
+     * @throws EsfException
      */
     public static function fromBase64Url(string $encoded): string
     {
-        $encoded = trim($encoded);
+        $encoded = trim($encoded, " \t\n\r\v\f");
         if (preg_match('/\A[A-Za-z0-9_-]*\z/', $encoded) !== 1 || strlen($encoded) % 4 === 1) {
-            throw new EsfError('not valid base64url');
+            throw new EsfException('not valid base64url');
         }
         $padded = str_pad($encoded, (strlen($encoded) + 3) & ~3, '=');
         return (string) base64_decode(strtr($padded, '-_', '+/'), true);
@@ -111,12 +111,12 @@ final class Esf
         [$data, $where] = Source::source($fits, $catalog);
         try {
             return self::canonical(Text::parse($data), $catalog, $fits);
-        } catch (EsfError $e) {
+        } catch (EsfException $e) {
             if ($e->lineNumber === null) {
                 throw $e;
             }
             [$fit, $entry] = $where[$e->lineNumber - 1];
-            throw new EsfError($e->reason, fitNumber: $fit, entryNumber: $entry);
+            throw new EsfException($e->reason, fitNumber: $fit, entryNumber: $entry);
         }
     }
 }

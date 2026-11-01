@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EveShipFit\EsfFormat\Internal;
 
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 
 /**
  * A position in one line of text.
@@ -25,7 +25,7 @@ final class Cursor
 
     public function error(string $message): never
     {
-        throw new EsfError($message, $this->number);
+        throw new EsfException($message, $this->number);
     }
 
     public function peek(): string

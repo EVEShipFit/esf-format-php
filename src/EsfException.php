@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat;
 
 /** A broken rule of esf/1, and where: a line of text, or a fit and entry, counting from 1. */
-final class EsfError extends \Exception
+final class EsfException extends \Exception
 {
     public function __construct(
         public readonly string $reason,

@@ -5,7 +5,7 @@
 declare(strict_types=1);
 
 use EveShipFit\EsfFormat\Esf;
-use EveShipFit\EsfFormat\EsfError;
+use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\Tests\JsonCatalog;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -19,7 +19,7 @@ try {
     } elseif ($command === 'binary') {
         fwrite(STDOUT, Esf::saveBinary($fits, $catalog));
     }
-} catch (EsfError $e) {
+} catch (EsfException $e) {
     fwrite(STDERR, "invalid: {$e->getMessage()}\n");
     exit(1);
 }

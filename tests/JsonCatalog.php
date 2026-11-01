@@ -23,9 +23,9 @@ final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
     private array $types = [];
     /** @var array<int, AttributeRecord> */
     private array $attributes = [];
-    /** @var array<string, int> */
+    /** @var array<array-key, int> */
     private array $typeNames;
-    /** @var array<string, int> */
+    /** @var array<array-key, int> */
     private array $attributeNames;
     /** @var array<int, list<TypeRecord>> */
     private array $modes = [];
@@ -106,7 +106,7 @@ final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
      * Where names are shared, published wins, then the lowest ID (§4.2).
      *
      * @param list<Named> $entries
-     * @return array<string, int>
+     * @return array<array-key, int>
      */
     private static function byName(array $entries): array
     {
