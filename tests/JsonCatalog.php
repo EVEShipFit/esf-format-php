@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat\Tests;
 
 use EveShipFit\EsfFormat\AttributeRecord;
-use EveShipFit\EsfFormat\Esf;
 use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\ModeCatalog;
 use EveShipFit\EsfFormat\MutaplasmidCatalog;
 use EveShipFit\EsfFormat\MutaplasmidRecord;
+use EveShipFit\EsfFormat\Sde;
 use EveShipFit\EsfFormat\TypeRecord;
 
-/**
- * A Catalog read from the esf-format test catalog.
- *
- * @phpstan-type Named array{id: int, name: string, published: bool}
- */
+/** A Catalog read from the esf-format test catalog. */
 final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
 {
     /** @var array<int, TypeRecord> */
@@ -58,8 +54,18 @@ final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
         foreach ($data['attributes'] as $a) {
             $this->attributes[$a['id']] = new AttributeRecord($a['id'], $a['name']);
         }
-        $this->typeNames = self::byName($data['types']);
-        $this->attributeNames = self::byName($data['attributes']);
+        $this->typeNames = Sde::nameIndex(
+            $data['types'],
+            static fn($t) => $t['id'],
+            static fn($t) => $t['name'],
+            static fn($t) => $t['published'],
+        );
+        $this->attributeNames = Sde::nameIndex(
+            $data['attributes'],
+            static fn($a) => $a['id'],
+            static fn($a) => $a['name'],
+            static fn($a) => $a['published'],
+        );
         foreach ($data['modes'] as $m) {
             $this->modes[$m['hull']] = array_map(fn($id) => $this->types[$id], $m['modes']);
         }
@@ -72,9 +78,9 @@ final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
         }
     }
 
-    public function type(string $folded): ?TypeRecord
+    public function type(string $foldedName): ?TypeRecord
     {
-        return $this->types[$this->typeNames[$folded] ?? -1] ?? null;
+        return $this->types[$this->typeNames[$foldedName] ?? -1] ?? null;
     }
 
     public function typeById(int $typeId): ?TypeRecord
@@ -82,9 +88,9 @@ final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
         return $this->types[$typeId] ?? null;
     }
 
-    public function attribute(string $folded): ?AttributeRecord
+    public function attribute(string $foldedName): ?AttributeRecord
     {
-        return $this->attributes[$this->attributeNames[$folded] ?? -1] ?? null;
+        return $this->attributes[$this->attributeNames[$foldedName] ?? -1] ?? null;
     }
 
     public function attributeById(int $attributeId): ?AttributeRecord
@@ -100,21 +106,5 @@ final class JsonCatalog implements ModeCatalog, MutaplasmidCatalog
     public function mutaplasmids(int $typeId): array
     {
         return $this->mutaplasmids[$typeId] ?? [];
-    }
-
-    /**
-     * Where names are shared, published wins, then the lowest ID (§4.2).
-     *
-     * @param list<Named> $entries
-     * @return array<array-key, int>
-     */
-    private static function byName(array $entries): array
-    {
-        usort($entries, static fn($a, $b) => [!$a['published'], $a['id']] <=> [!$b['published'], $b['id']]);
-        $index = [];
-        foreach ($entries as $e) {
-            $index[Esf::fold($e['name'])] ??= $e['id'];
-        }
-        return $index;
     }
 }

@@ -75,13 +75,15 @@ The library holds no game data. You give it a `Catalog`: an object that looks
 up types and attributes in your copy of the SDE.
 
 ```php
+use EveShipFit\EsfFormat\AttributeRecord;
 use EveShipFit\EsfFormat\Catalog;
+use EveShipFit\EsfFormat\TypeRecord;
 
 final class MyCatalog implements Catalog
 {
-    public function type(string $folded): ?TypeRecord { ... }
+    public function type(string $foldedName): ?TypeRecord { ... }
     public function typeById(int $typeId): ?TypeRecord { ... }
-    public function attribute(string $folded): ?AttributeRecord { ... }
+    public function attribute(string $foldedName): ?AttributeRecord { ... }
     public function attributeById(int $attributeId): ?AttributeRecord { ... }
 }
 ```
@@ -90,9 +92,34 @@ Implement `ModeCatalog` (`modes()`) and `MutaplasmidCatalog`
 (`mutaplasmids()`) too, or no hull has tactical modes and no type has
 mutaplasmids.
 
-Names are looked up folded: index them with `Esf::fold($name)`. Where
-names are shared, published wins, then the lowest ID (§4.2).
-[tests/JsonCatalog.php](https://github.com/EVEShipFit/esf-format-php/blob/main/tests/JsonCatalog.php) is a complete example.
+Each method and field says what to return and where in the SDE it comes
+from. `Sde` has helpers for the parts that take more than a lookup:
+
+```php
+use EveShipFit\EsfFormat\Sde;
+
+$typeNames = Sde::nameIndex(
+    $types,
+    fn($t) => $t['_key'],
+    fn($t) => $t['name']['en'],
+    fn($t) => $t['published'] ?? false,
+);
+
+// $effects: effectID => effectCategoryID; $attributes: attributeID => value
+
+new TypeRecord(
+    id: $t['_key'],
+    name: $t['name']['en'],
+    kind: Sde::kind($group['categoryID'], $t['groupID'], array_keys($effects)),
+    active: Sde::active($effects),
+    capacity: (float) ($t['capacity'] ?? 0),
+    volume: (float) ($t['volume'] ?? 0),
+    squadronSize: Sde::squadronSize($attributes),
+);
+```
+
+[SdeJsonlCatalog.php](https://github.com/EVEShipFit/esf-format-php/blob/main/examples/SdeJsonlCatalog.php)
+is a complete example on the official SDE in JSONL: copy it into your project.
 
 ## Tests
 
