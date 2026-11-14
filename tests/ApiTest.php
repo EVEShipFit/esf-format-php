@@ -320,9 +320,9 @@ class MinimalCatalog implements Catalog
 {
     public function __construct(protected readonly JsonCatalog $catalog) {}
 
-    public function type(string $folded): ?TypeRecord
+    public function type(string $foldedName): ?TypeRecord
     {
-        return $this->catalog->type($folded);
+        return $this->catalog->type($foldedName);
     }
 
     public function typeById(int $typeId): ?TypeRecord
@@ -330,9 +330,9 @@ class MinimalCatalog implements Catalog
         return $this->catalog->typeById($typeId);
     }
 
-    public function attribute(string $folded): ?AttributeRecord
+    public function attribute(string $foldedName): ?AttributeRecord
     {
-        return $this->catalog->attribute($folded);
+        return $this->catalog->attribute($foldedName);
     }
 
     public function attributeById(int $attributeId): ?AttributeRecord
