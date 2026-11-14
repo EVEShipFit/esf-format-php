@@ -8,7 +8,8 @@ namespace EveShipFit\EsfFormat;
  * One line of a fit: an item, an empty slot, or another fit carried by this one.
  *
  * Only `$type` is needed; every other field is null or empty when it is the default.
- * Entries can be in any order, except within a rack: there, the order is the slot order.
+ * Entries can be in any order, except within a rack: there, the order is the slot order,
+ * unless an entry sets `$slot`.
  */
 final class Entry
 {
@@ -39,6 +40,11 @@ final class Entry
      *     keep the type's value. Empty for none.
      * @param State|null $state Whether the item is offline, online or running. Null means its default; see {@see State}.
      * @param Location|null $location Where the item goes. Null means where its type goes by default; see {@see Location}.
+     * @param int|null $slot The slot in the `$location` rack, counting from 1, like 3 for the third high slot.
+     *     Set `$location` to the rack too. Null means the next free slot. {@see Esf::load()} never sets
+     *     this: it gives the rack in slot order, with empty slots in between.
+     *     It can't be combined with `$count`, and the item must go in that rack. Each slot can be
+     *     pinned once, and the slot is at most 4294967295.
      */
     public function __construct(
         public ?int $type,
@@ -50,5 +56,6 @@ final class Entry
         public array $overrides = [],
         public ?State $state = null,
         public ?Location $location = null,
+        public ?int $slot = null,
     ) {}
 }
