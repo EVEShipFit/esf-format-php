@@ -190,8 +190,11 @@ final class SdeJsonlCatalog implements ModeCatalog, MutaplasmidCatalog
     private static function rows(string $path): \Generator
     {
         $file = new \SplFileObject($path);
-        while (($line = $file->fgets()) !== '') {
-            yield json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+        $file->setFlags(\SplFileObject::READ_AHEAD | \SplFileObject::SKIP_EMPTY | \SplFileObject::DROP_NEW_LINE);
+        foreach ($file as $line) {
+            if (is_string($line)) {
+                yield json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+            }
         }
     }
 
