@@ -70,7 +70,7 @@ final class Sde
      * running, so that one does not count.
      *
      * @param array<int, int> $effects Each `effectID` in the type's `dogmaEffects` (in `typeDogma.jsonl`),
-     *     mapped to that effect's `effectCategoryID` (in `dogmaEffects.jsonl`).
+     *     mapped to that effect's `effectCategoryID` (in `dogmaEffects.jsonl`). Use 0 when an effect has no `effectCategoryID`.
      */
     public static function active(array $effects): bool
     {
@@ -131,7 +131,8 @@ final class Sde
      * Where names are shared, the published one wins, then the lowest ID (§4.2).
      * In the SDE, a type or attribute without `published` counts as not published.
      *
-     * Returns an array from case-folded name to ID.
+     * Returns an array from case-folded name to ID. PHP stores an all-digit name like "123" as an int key;
+     * looking it up by string still works.
      *
      * @template T
      * @param iterable<T> $entries The types or attributes, in any form.

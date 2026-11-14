@@ -84,4 +84,15 @@ final class SdeTest extends TestCase
         );
         self::assertEquals(['avatar' => 11567, 'twin' => 20, 'rifter' => 587], $index);
     }
+
+    public function testNameIndexAllDigitName(): void
+    {
+        $index = Sde::nameIndex(
+            [['id' => 1, 'name' => '123', 'published' => true]],
+            static fn($e) => $e['id'],
+            static fn($e) => $e['name'],
+            static fn($e) => $e['published'],
+        );
+        self::assertSame(1, $index['123']);
+    }
 }
