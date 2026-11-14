@@ -357,6 +357,10 @@ final class ApiTest extends TestCase
             ],
             Esf::load($text, self::catalog())[0]->entries,
         );
+        self::assertEquals(
+            Esf::load($text, self::catalog()),
+            Esf::load(Esf::saveBinary([$pinned], self::catalog()), self::catalog()),
+        );
     }
 
     public function testFold(): void

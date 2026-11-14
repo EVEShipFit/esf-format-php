@@ -43,6 +43,8 @@ final class Entry
      * @param int|null $slot The slot in the `$location` rack, counting from 1, like 3 for the third high slot.
      *     Set `$location` to the rack too. Null means the next free slot. {@see Esf::load()} never sets
      *     this: it gives the rack in slot order, with empty slots in between.
+     *     It can't be combined with `$count`, and the item must go in that rack. Each slot can be
+     *     pinned once, and the slot is at most 4294967295.
      */
     public function __construct(
         public ?int $type,
