@@ -118,8 +118,15 @@ final class Source
         if (($e->count !== null && $e->count < 1) || ($e->chargeCount !== null && $e->chargeCount < 1)) {
             throw new EsfException('a count must be at least 1');
         }
-        if ($e->type !== null && $e->location !== null && in_array($e->location->value, Text::RACKS, true)) {
-            throw new EsfException('a rack location is only for an empty slot');
+        $rack = $e->location !== null && in_array($e->location->value, Text::RACKS, true);
+        if ($e->slot !== null && $e->slot < 1) {
+            throw new EsfException('a slot must be at least 1');
+        }
+        if ($e->slot !== null && !$rack) {
+            throw new EsfException('a slot needs the rack it is in');
+        }
+        if ($e->type !== null && $e->slot === null && $rack) {
+            throw new EsfException('an item names a rack only to pin a slot');
         }
         if ($e->chargeCount !== null && $e->charge === null) {
             throw new EsfException('a charge count is set without a charge');
@@ -153,7 +160,7 @@ final class Source
             $parts[] = '!' . $e->state->value;
         }
         if ($e->location !== null) {
-            $parts[] = '@' . $e->location->value;
+            $parts[] = '@' . $e->location->value . $e->slot;
         }
         return implode(' ', $parts);
     }

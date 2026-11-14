@@ -143,7 +143,31 @@ final class ApiTest extends TestCase
         ];
         yield 'rack-on-item' => [
             [self::fit(new Entry(self::AUTOCANNON, location: Location::High))],
-            'only for an empty slot',
+            'only to pin a slot',
+        ];
+        yield 'slot-zero' => [
+            [self::fit(new Entry(self::AUTOCANNON, location: Location::High, slot: 0))],
+            'at least 1',
+        ];
+        yield 'slot-without-rack' => [[self::fit(new Entry(self::AUTOCANNON, slot: 1))], 'needs the rack'];
+        yield 'slot-with-count' => [
+            [self::fit(new Entry(self::AUTOCANNON, count: 2, location: Location::High, slot: 1))],
+            'mutually exclusive',
+        ];
+        yield 'slot-wrong-rack' => [
+            [self::fit(new Entry(self::AUTOCANNON, location: Location::Low, slot: 1))],
+            'does not go in the low rack',
+        ];
+        yield 'slot-on-hold' => [
+            [self::fit(new Entry(self::EMP, location: Location::Cargo, slot: 1))],
+            'needs the rack',
+        ];
+        yield 'slot-twice' => [
+            [self::fit(
+                new Entry(self::AUTOCANNON, location: Location::High, slot: 1),
+                new Entry(self::AUTOCANNON, location: Location::High, slot: 1),
+            )],
+            'pinned twice',
         ];
         yield 'charge-count-alone' => [
             [self::fit(new Entry(self::AUTOCANNON, chargeCount: 10))],
@@ -300,6 +324,39 @@ final class ApiTest extends TestCase
         self::assertTrue(Esf::isText(" %esf/1\n"));
         self::assertFalse(Esf::isText("\x0a\x02"));
         self::assertFalse(Esf::isText(''));
+    }
+
+    public function testSaveSlots(): void
+    {
+        $pinned = self::fit(
+            new Entry(self::AUTOCANNON),
+            new Entry(self::AUTOCANNON, location: Location::High, slot: 3),
+            new Entry(null, location: Location::Low, slot: 1),
+            new Entry(self::DAMAGE_CONTROL),
+        );
+        $text = Esf::save([$pinned], self::catalog());
+        self::assertSame(
+            "%esf/1\n"
+            . "Rifter\n"
+            . "\n"
+            . "200mm AutoCannon II\n"
+            . "- @high\n"
+            . "200mm AutoCannon II\n"
+            . "\n"
+            . "- @low\n"
+            . "Damage Control II\n",
+            $text,
+        );
+        self::assertEquals(
+            [
+                new Entry(self::AUTOCANNON),
+                new Entry(null, location: Location::High),
+                new Entry(self::AUTOCANNON),
+                new Entry(null, location: Location::Low),
+                new Entry(self::DAMAGE_CONTROL),
+            ],
+            Esf::load($text, self::catalog())[0]->entries,
+        );
     }
 
     public function testFold(): void

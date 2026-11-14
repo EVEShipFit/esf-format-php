@@ -39,6 +39,9 @@ final class Entry
      *     keep the type's value. Empty for none.
      * @param State|null $state Whether the item is offline, online or running. Null means its default; see {@see State}.
      * @param Location|null $location Where the item goes. Null means where its type goes by default; see {@see Location}.
+     * @param int|null $slot The slot in the `$location` rack, counting from 1, like 3 for the third high slot.
+     *     Set `$location` to the rack too. Null means the next free slot. {@see Esf::load()} never sets
+     *     this: it gives the rack in slot order, with empty slots in between.
      */
     public function __construct(
         public ?int $type,
@@ -50,5 +53,6 @@ final class Entry
         public array $overrides = [],
         public ?State $state = null,
         public ?Location $location = null,
+        public ?int $slot = null,
     ) {}
 }
