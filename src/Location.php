@@ -10,28 +10,29 @@ namespace EveShipFit\EsfFormat;
  * An item goes where its {@see Kind} says, so most entries leave this null. Set it to store an
  * item somewhere else, like a spare Damage Control II in Cargo.
  *
- * The racks, High to Svc, are only for empty slots. An item never names its rack.
+ * The racks, High to Svc, are for empty slots, and for an item put in a given
+ * slot ({@see Entry::$slot}). Otherwise, an item never names its rack.
  * The holds, Ammo to Subsystem, only make sense on a hull that has that hold, but the
  * library does not check that.
  */
 enum Location: string
 {
-    /** The high slot rack, for an empty slot. */
+    /** The high slot rack. */
     case High = 'high';
 
-    /** The mid slot rack, for an empty slot. */
+    /** The mid slot rack. */
     case Mid = 'mid';
 
-    /** The low slot rack, for an empty slot. */
+    /** The low slot rack. */
     case Low = 'low';
 
-    /** The rig rack, for an empty slot. */
+    /** The rig rack. */
     case Rig = 'rig';
 
-    /** The subsystem rack, for an empty slot. Not the same as Subsystem, which is a hold. */
+    /** The subsystem rack. Not the same as Subsystem, which is a hold. */
     case Sub = 'sub';
 
-    /** The structure service rack, for an empty slot. */
+    /** The structure service rack. */
     case Svc = 'svc';
 
     /** The cargo hold. */

@@ -8,7 +8,8 @@ namespace EveShipFit\EsfFormat;
  * One line of a fit: an item, an empty slot, or another fit carried by this one.
  *
  * Only `$type` is needed; every other field is null or empty when it is the default.
- * Entries can be in any order, except within a rack: there, the order is the slot order.
+ * Entries can be in any order, except within a rack: there, the order is the slot order,
+ * unless an entry sets `$slot`.
  */
 final class Entry
 {
