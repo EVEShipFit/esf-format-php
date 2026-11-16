@@ -11,6 +11,7 @@ use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
 use EveShipFit\EsfFormat\EsfFormatException;
 use EveShipFit\EsfFormat\EsfRuleException;
+use EveShipFit\EsfFormat\TypeRecord;
 
 /**
  * Fits as the text they stand for, and the check that their IDs match it (SPEC §10.2).
@@ -102,10 +103,19 @@ final class Source
         return Canonical::quote($text);
     }
 
+    private static function type(Catalog $catalog, int $typeId, string $what): TypeRecord
+    {
+        return $catalog->typeById($typeId) ?? throw new EsfCatalogException("unknown {$what} type ID {$typeId}");
+    }
+
     private static function typeName(Catalog $catalog, int $typeId, string $what): string
     {
-        $type = $catalog->typeById($typeId) ?? throw new EsfCatalogException("unknown {$what} type ID {$typeId}");
-        return Canonical::quoteType($type->name);
+        return Canonical::quoteType(self::type($catalog, $typeId, $what)->name);
+    }
+
+    private static function typeRef(Catalog $catalog, int $typeId, string $what): string
+    {
+        return Canonical::typeRef($catalog, self::type($catalog, $typeId, $what));
     }
 
     private static function number(float $value): string
@@ -139,13 +149,13 @@ final class Source
         if ($e->count !== null) {
             $parts[] = "{$e->count}x";
         }
-        $parts[] = $e->type === null ? '-' : self::typeName($catalog, $e->type, 'item');
+        $parts[] = $e->type === null ? '-' : self::typeRef($catalog, $e->type, 'item');
         if ($e->fitName !== null && $e->fitName !== '') {
             $parts[] = self::name($e->fitName);
         }
         if ($e->charge !== null) {
             $count = $e->chargeCount === null ? '' : "{$e->chargeCount}x ";
-            $parts[] = ':' . $count . self::typeName($catalog, $e->charge, 'charge');
+            $parts[] = ':' . $count . self::typeRef($catalog, $e->charge, 'charge');
         }
         if ($e->mutaplasmid !== null) {
             $parts[] = '+' . self::typeName($catalog, $e->mutaplasmid, 'mutaplasmid');
@@ -170,7 +180,7 @@ final class Source
 
     private static function hull(EsfFit $fit, Catalog $catalog): string
     {
-        $hull = [$fit->hull === null ? '-' : self::typeName($catalog, $fit->hull, 'hull')];
+        $hull = [$fit->hull === null ? '-' : self::typeRef($catalog, $fit->hull, 'hull')];
         if ($fit->name !== null && $fit->name !== '') {
             $hull[] = self::name($fit->name);
         }

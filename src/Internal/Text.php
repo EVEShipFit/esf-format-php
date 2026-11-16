@@ -47,6 +47,11 @@ final class Text
         return preg_match('/\A[0-9]+x\z/', $token) === 1;
     }
 
+    public static function isTypeId(string $name): bool
+    {
+        return preg_match('/\A#[0-9]+\z/', $name) === 1;
+    }
+
     /**
      * Split a text document into fits; other blocks are skipped.
      *
@@ -144,7 +149,7 @@ final class Text
         if (self::isCount($cur->token())) {
             $cur->error('the hull line cannot have a count');
         }
-        $block->hull = $cur->typeName();
+        $block->hull = $cur->typeRef();
         $more = $cur->nextElement();
         if ($more && $cur->peek() === '"') {
             $block->fitName = $cur->quoted();
@@ -182,7 +187,7 @@ final class Text
             return new EmptyLine($cur->number, $rack, $count, $index);
         }
 
-        $line = new ItemLine($cur->number, $cur->typeName(), $count);
+        $line = new ItemLine($cur->number, $cur->typeRef(), $count);
         $more = $cur->nextElement();
 
         if ($more && $cur->peek() === '"') {
@@ -206,7 +211,7 @@ final class Text
             if ($c === ':' && $stage < 1) {
                 $cur->i++;
                 $line->chargeCount = $cur->count();
-                $line->charge = $cur->typeName();
+                $line->charge = $cur->typeRef();
                 $stage = 1;
             } elseif ($c === '+' && $stage < 2) {
                 $cur->i++;

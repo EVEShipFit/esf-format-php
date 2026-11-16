@@ -140,6 +140,21 @@ final class Cursor
         }
     }
 
+    /** A type name, or a type ID as an int (SPEC §6.13). */
+    public function typeRef(): string|int
+    {
+        $quoted = $this->peek() === '"';
+        $name = $this->typeName();
+        if ($quoted || !Text::isTypeId($name)) {
+            return $name;
+        }
+        $digits = ltrim(substr($name, 1), '0');
+        if (strlen($digits) > 10 || (int) $digits > Text::UINT32_MAX) {
+            $this->error('a type ID is too large');
+        }
+        return (int) $digits;
+    }
+
     /**
      * @return array{string, ?int}
      */

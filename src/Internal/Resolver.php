@@ -96,8 +96,11 @@ final class Resolver
         return ltrim(mb_substr($mode->name, mb_strlen($hull->name, 'UTF-8'), null, 'UTF-8'), ' ');
     }
 
-    private static function type(Catalog $catalog, string $name, int $line): TypeRecord
+    private static function type(Catalog $catalog, string|int $name, int $line): TypeRecord
     {
+        if (is_int($name)) {
+            return $catalog->typeById($name) ?? throw new EsfCatalogException("unknown type ID #{$name}", $line);
+        }
         return $catalog->type(Names::fold($name))
             ?? throw new EsfCatalogException("unknown type '{$name}'", $line);
     }
