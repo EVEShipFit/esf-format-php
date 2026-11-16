@@ -30,6 +30,9 @@ final class ApiTest extends TestCase
     private const AVATAR = 11567;
     private const AVATAR_UNPUBLISHED = 50097;
     private const SMALL_SECURE_CONTAINER = 3467;
+    private const NYX = 23913;
+    private const TEMPLAR = 40556;
+    private const FIRBOLG = 40558;
 
     private static ?JsonCatalog $catalog = null;
 
@@ -168,6 +171,14 @@ final class ApiTest extends TestCase
                 new Entry(self::AUTOCANNON, location: Location::High, slot: 1),
             )],
             'pinned twice',
+        ];
+        yield 'tube-without-slot' => [
+            [new EsfFit(self::NYX, entries: [new Entry(self::TEMPLAR, location: Location::Tube)])],
+            'only to pin a slot',
+        ];
+        yield 'tube-not-fighter' => [
+            [new EsfFit(self::NYX, entries: [new Entry(self::HOBGOBLIN, location: Location::Tube, slot: 1)])],
+            'does not go in the tube rack',
         ];
         yield 'charge-count-alone' => [
             [self::fit(new Entry(self::AUTOCANNON, chargeCount: 10))],
@@ -360,6 +371,38 @@ final class ApiTest extends TestCase
         self::assertEquals(
             Esf::load($text, self::catalog()),
             Esf::load(Esf::saveBinary([$pinned], self::catalog()), self::catalog()),
+        );
+    }
+
+    public function testSaveTubes(): void
+    {
+        $fit = new EsfFit(self::NYX, entries: [
+            new Entry(self::FIRBOLG, count: 3, location: Location::Tube, slot: 4),
+            new Entry(self::TEMPLAR),
+            new Entry(null, location: Location::Tube, slot: 3),
+            new Entry(null, location: Location::Tube, slot: 6),
+        ]);
+        $text = Esf::save([$fit], self::catalog());
+        self::assertSame(
+            "%esf/1\n"
+            . "Nyx\n"
+            . "\n"
+            . "Templar II\n"
+            . "2x - @tube\n"
+            . "3x Firbolg II\n",
+            $text,
+        );
+        self::assertEquals(
+            [
+                new Entry(self::TEMPLAR),
+                new Entry(null, count: 2, location: Location::Tube),
+                new Entry(self::FIRBOLG, count: 3),
+            ],
+            Esf::load($text, self::catalog())[0]->entries,
+        );
+        self::assertEquals(
+            Esf::load($text, self::catalog()),
+            Esf::load(Esf::saveBinary([$fit], self::catalog()), self::catalog()),
         );
     }
 

@@ -46,6 +46,7 @@ final class Binary
         'planetary' => 25,
         'quafe' => 26,
         'subsystem' => 27,
+        'tube' => 28,
     ];
 
     /**

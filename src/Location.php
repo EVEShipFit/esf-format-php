@@ -12,8 +12,9 @@ namespace EveShipFit\EsfFormat;
  * So a drone with no location is out in space, and a fighter is in a launch tube. Set
  * Bay to keep either one in its bay.
  *
- * The racks, High to Svc, are for empty slots, and for an item put in a given
- * slot ({@see Entry::$slot}). Otherwise, an item never names its rack.
+ * The racks, High to Tube, are for empty slots, and for an item put in a given
+ * slot ({@see Entry::$slot}). Otherwise, an item never names its rack. Tube is the
+ * fighter launch tubes, and only takes fighters.
  * The holds, Ammo to Subsystem, only make sense on a hull that has that hold, but the
  * library does not check that.
  */
@@ -36,6 +37,9 @@ enum Location: string
 
     /** The structure service rack. */
     case Svc = 'svc';
+
+    /** The fighter launch tubes. */
+    case Tube = 'tube';
 
     /** The cargo hold. */
     case Cargo = 'cargo';

@@ -118,7 +118,7 @@ final class Source
         if (($e->count !== null && $e->count < 1) || ($e->chargeCount !== null && $e->chargeCount < 1)) {
             throw new EsfException('a count must be at least 1');
         }
-        $rack = $e->location !== null && in_array($e->location->value, Text::RACKS, true);
+        $rack = $e->location !== null && in_array($e->location->value, Text::PINNABLE, true);
         if ($e->slot !== null && $e->slot < 1) {
             throw new EsfException('a slot must be at least 1');
         }
