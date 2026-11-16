@@ -122,6 +122,19 @@ new TypeRecord(
 [SdeJsonlCatalog.php](https://github.com/EVEShipFit/esf-format-php/blob/main/examples/SdeJsonlCatalog.php)
 is a complete example on the official SDE in JSONL: copy it into your project.
 
+## ESI
+
+ESI gives each item in a ship a `location_flag`. `Esi` turns it into a
+location and a slot:
+
+```php
+new Entry($typeId, location: Esi::location($flag) ?? Location::Cargo, slot: Esi::slot($flag));
+```
+
+`HiSlot2` gives `High` and slot 3, and `ShipHangar` gives `Maintenance`.
+A flag that is not inside a ship, like `Hangar`, gives `null`; the example
+puts those items in the cargo hold.
+
 ## Tests
 
 The test cases live in [esf-format](https://github.com/EVEShipFit/esf-format):
