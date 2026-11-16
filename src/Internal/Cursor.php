@@ -151,12 +151,12 @@ final class Cursor
         $this->i += strlen($match[0]);
         [, $name, $index] = $match;
         if ($index !== '') {
-            if (!in_array($name, Text::RACKS, true)) {
+            if (!in_array($name, Text::PINNABLE, true)) {
                 $this->error("unknown rack '{$name}'");
             }
             return [$name, $this->positive($index, 'a slot number')];
         }
-        if (!in_array($name, Text::STORED, true) && !in_array($name, Text::RACKS, true)) {
+        if (!in_array($name, Text::STORED, true) && !in_array($name, Text::PINNABLE, true)) {
             $this->error("unknown location '{$name}'");
         }
         return [$name, null];

@@ -18,7 +18,7 @@ use EveShipFit\EsfFormat\TypeRecord;
 final class Resolver
 {
     public const DRONES = 'drones';
-    public const FIGHTERS = 'fighters';
+    public const TUBE = Text::TUBE;
     public const IMPLANTS = 'implants';
     public const BOOSTERS = 'boosters';
     public const PLUGGED = [self::IMPLANTS, self::BOOSTERS];
@@ -57,11 +57,11 @@ final class Resolver
         foreach ($fits as $fit) {
             $byRack = [];
             foreach ($fit->items as $item) {
-                if (in_array($item->place, Text::RACKS, true)) {
+                if (in_array($item->place, Text::PINNABLE, true)) {
                     $byRack[$item->place][] = $item;
                 }
             }
-            foreach (Text::RACKS as $rack) {
+            foreach (Text::PINNABLE as $rack) {
                 if (isset($byRack[$rack])) {
                     $fit->racks[$rack] = self::layout($byRack[$rack]);
                 }
@@ -76,7 +76,7 @@ final class Resolver
         return match ($kind) {
             Kind::Sub, Kind::High, Kind::Mid, Kind::Low, Kind::Rig, Kind::Svc => $kind->value,
             Kind::Drone => self::DRONES,
-            Kind::Fighter => self::FIGHTERS,
+            Kind::Fighter => self::TUBE,
             Kind::Implant => self::IMPLANTS,
             Kind::Booster => self::BOOSTERS,
             default => null,
@@ -312,7 +312,7 @@ final class Resolver
             if ($item->line->index !== null) {
                 continue;
             }
-            $remaining = $item->line->count ?? 1;
+            $remaining = $item instanceof Item && $item->place === self::TUBE ? 1 : $item->line->count ?? 1;
             while ($remaining > 0) {
                 while (isset($pinned[$pos])) {
                     $pos++;

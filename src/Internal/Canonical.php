@@ -22,7 +22,7 @@ final class Canonical
     private const GROUPS = [
         ...Text::RACKS,
         Resolver::DRONES,
-        Resolver::FIGHTERS,
+        Resolver::TUBE,
         'cargo',
         ...Text::HOLDS,
         ...Resolver::PLUGGED,
@@ -65,7 +65,7 @@ final class Canonical
             }
             $group = $item->place;
             if ($group === 'bay') {
-                $group = $item->type->kind === Kind::Fighter ? Resolver::FIGHTERS : Resolver::DRONES;
+                $group = $item->type->kind === Kind::Fighter ? Resolver::TUBE : Resolver::DRONES;
             }
             $groups[$group][] = $item;
         }
@@ -76,7 +76,7 @@ final class Canonical
             $chunk = match (true) {
                 in_array($group, Text::RACKS, true) => self::rack($fit, $group, $catalog),
                 $group === Resolver::DRONES => self::drones($items, $fit, $catalog),
-                $group === Resolver::FIGHTERS => self::fighters($items, $fit, $catalog),
+                $group === Resolver::TUBE => self::fighters($items, $fit, $catalog),
                 default => self::sorted($items, $fit, $catalog),
             };
             if ($chunk !== []) {
@@ -277,20 +277,30 @@ final class Canonical
      */
     private static function fighters(array $items, Fit $fit, Catalog $catalog): array
     {
+        $runs = $fit->racks[Resolver::TUBE] ?? [];
+        while ($runs !== [] && end($runs)->item === null) {
+            array_pop($runs);
+        }
         $lines = [];
-        $bay = [];
-        foreach ($items as $item) {
-            if ($item->place !== Resolver::FIGHTERS) {
-                $bay[] = $item;
+        $last = null;
+        foreach ($runs as $run) {
+            if ($run->item === null) {
+                if ($last !== null && $last->type === null) {
+                    $last->count = ($last->count ?? 1) + $run->length;
+                    continue;
+                }
+                $last = new CanonLine(null, $run->length === 1 ? null : $run->length, Resolver::TUBE);
+                $lines[] = $last;
                 continue;
             }
-            $line = self::line($item, $fit, $catalog);
-            $count = $item->line->count;
-            if ($count !== null && $count !== $item->type->squadronSize) {
-                $line->count = $count;
+            $last = self::line($run->item, $fit, $catalog);
+            $count = $run->item->line->count;
+            if ($count !== null && $count !== $run->item->type->squadronSize) {
+                $last->count = $count;
             }
-            $lines[] = $line;
+            $lines[] = $last;
         }
+        $bay = array_values(array_filter($items, static fn($i) => $i->place !== Resolver::TUBE));
         return [...$lines, ...self::sorted($bay, $fit, $catalog)];
     }
 

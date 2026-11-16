@@ -15,6 +15,8 @@ final class Text
 {
     public const SIGILS = ':+{!@/"';
     public const RACKS = ['sub', 'high', 'mid', 'low', 'rig', 'svc'];
+    public const TUBE = 'tube';
+    public const PINNABLE = [...self::RACKS, self::TUBE];
     public const HOLDS = [
         'ammo',
         'booster',
@@ -169,7 +171,7 @@ final class Text
                 $cur->error('an empty slot must name its rack');
             }
             [$rack, $index] = $cur->location();
-            if (!in_array($rack, self::RACKS, true)) {
+            if (!in_array($rack, self::PINNABLE, true)) {
                 $cur->error('an empty slot must name a rack');
             }
             if ($index !== null && $count !== null) {
@@ -220,7 +222,7 @@ final class Text
                 if ($line->index === null && !in_array($line->location, self::STORED, true)) {
                     $cur->error('an item names a rack only to pin a slot, which needs an index');
                 }
-                if ($line->index !== null && $count !== null) {
+                if ($line->index !== null && $count !== null && $line->location !== self::TUBE) {
                     $cur->error('a count and a pinned slot are mutually exclusive');
                 }
                 $stage = 5;
