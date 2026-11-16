@@ -9,6 +9,8 @@ namespace EveShipFit\EsfFormat;
  *
  * An item goes where its {@see Kind} says, so most entries leave this null. Set it to store an
  * item somewhere else, like a spare Damage Control II in Cargo.
+ * So a drone with no location is out in space, and a fighter is in a launch tube. Set
+ * Bay to keep either one in its bay.
  *
  * The racks, High to Svc, are for empty slots, and for an item put in a given
  * slot ({@see Entry::$slot}). Otherwise, an item never names its rack.
