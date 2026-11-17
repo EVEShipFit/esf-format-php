@@ -10,7 +10,7 @@ namespace EveShipFit\EsfFormat;
  * With the SDE, most fields come from `types.jsonl`. `$kind`, `$active` and `$squadronSize`
  * also need `groups.jsonl`, `typeDogma.jsonl` and `dogmaEffects.jsonl`, through the helpers in {@see Sde}.
  * Include every type in `types.jsonl`. A type with no row in `typeDogma.jsonl` has no effects
- * and no attributes: give the helpers an empty array.
+ * and no dogma attributes: give the helpers an empty array.
  */
 final readonly class TypeRecord
 {
@@ -25,7 +25,7 @@ final readonly class TypeRecord
      *     In the SDE this is `capacity`. Use 0 when the type has none.
      * @param float $volume How much room one of it takes, in m³. In the SDE this is `volume`. Use 0 when the type has none.
      * @param int|null $squadronSize For a fighter, how many make up a full squadron. Null for anything else.
-     *     In the SDE this is the attribute `fighterSquadronMaxSize`; {@see Sde::squadronSize()} reads it for you.
+     *     In the SDE this is the dogma attribute `fighterSquadronMaxSize`; {@see Sde::squadronSize()} reads it for you.
      */
     public function __construct(
         public int $id,

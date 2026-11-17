@@ -41,7 +41,7 @@ interface Catalog
     public function typeById(int $typeId): ?TypeRecord;
 
     /**
-     * Finds an attribute by its name, like "speedfactor".
+     * Finds a dogma attribute by its name, like "speedfactor".
      *
      * Used to read attribute overrides, like the rolls on an abyssal module.
      *
@@ -54,7 +54,7 @@ interface Catalog
     public function attribute(string $foldedName): ?AttributeRecord;
 
     /**
-     * Finds an attribute by its ID.
+     * Finds a dogma attribute by its ID.
      *
      * Used to write attribute overrides, like the rolls on an abyssal module.
      *
