@@ -14,6 +14,7 @@ final class EsfFit
 {
     /**
      * @param int|null $hull The type ID of the ship, structure or container, like 587 for the Rifter.
+     *     Only a type whose {@see Kind::canBeHull()} is true can be a hull.
      *     Null for a fit without a ship, like the items in a contract: then every entry is
      *     stored in cargo, and the fit has no slots and no mode.
      * @param string|null $name The name of the fit, like "Shield Buffer". Null for no name.

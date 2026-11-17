@@ -135,6 +135,9 @@ new Entry($typeId, location: Esi::location($flag) ?? Location::Cargo, slot: Esi:
 A flag that is not inside a ship, like `Hangar`, gives `null`; the example
 puts those items in the cargo hold.
 
+Only a ship, structure or container can be a fit's hull. Check
+`$catalog->typeById($typeId)?->kind->canBeHull()` before you use a type as one.
+
 ## Tests
 
 The test cases live in [esf-format](https://github.com/EVEShipFit/esf-format):
