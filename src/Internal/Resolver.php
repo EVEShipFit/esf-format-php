@@ -96,10 +96,17 @@ final class Resolver
         return ltrim(mb_substr($mode->name, mb_strlen($hull->name, 'UTF-8'), null, 'UTF-8'), ' ');
     }
 
-    private static function type(Catalog $catalog, string $name, int $line): TypeRecord
+    private static function type(Catalog $catalog, TypeRef $ref, int $line): TypeRecord
     {
-        return $catalog->type(Names::fold($name))
-            ?? throw new EsfCatalogException("unknown type '{$name}'", $line);
+        if ($ref->id !== null) {
+            $type = $catalog->typeById($ref->id) ?? throw new EsfCatalogException("unknown type ID #{$ref->id}", $line);
+            if (Names::fold($type->name) !== Names::fold($ref->name)) {
+                throw new EsfRuleException("type ID #{$ref->id} is '{$type->name}', not '{$ref->name}'", $line);
+            }
+            return $type;
+        }
+        return $catalog->type(Names::fold($ref->name))
+            ?? throw new EsfCatalogException("unknown type '{$ref->name}'", $line);
     }
 
     /**
@@ -163,7 +170,7 @@ final class Resolver
             return new EmptySlot($line);
         }
 
-        $t = self::type($catalog, $line->name, $n);
+        $t = self::type($catalog, $line->type, $n);
         $kind = $t->kind;
         if ($kind === Kind::Mode) {
             throw new EsfRuleException('a tactical mode is only written on the hull line', $n);

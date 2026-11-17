@@ -14,6 +14,7 @@ final readonly class CanonFit
      */
     public function __construct(
         public ?TypeRecord $hull,
+        public string $hullText,
         public ?string $name,
         public ?TypeRecord $mode,
         public ?string $modeText,
@@ -30,7 +31,7 @@ final readonly class CanonFit
 
     public function text(): string
     {
-        $hull = [$this->hull === null ? '-' : Canonical::quoteType($this->hull->name)];
+        $hull = [$this->hullText];
         if ($this->name !== null) {
             $hull[] = Canonical::quote($this->name);
         }

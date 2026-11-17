@@ -41,10 +41,16 @@ final class Text
     ];
     public const STORED = ['cargo', 'bay', ...self::HOLDS];
     public const UINT32_MAX = 0xFFFFFFFF;
+    public const NAME_WITH_ID = '/\A(.*[^ ])#([0-9]+)\z/su';
 
     public static function isCount(string $token): bool
     {
         return preg_match('/\A[0-9]+x\z/', $token) === 1;
+    }
+
+    public static function endsInTypeId(string $name): bool
+    {
+        return preg_match(self::NAME_WITH_ID, $name) === 1;
     }
 
     /**
@@ -144,7 +150,7 @@ final class Text
         if (self::isCount($cur->token())) {
             $cur->error('the hull line cannot have a count');
         }
-        $block->hull = $cur->typeName();
+        $block->hull = $cur->typeRef();
         $more = $cur->nextElement();
         if ($more && $cur->peek() === '"') {
             $block->fitName = $cur->quoted();
@@ -182,7 +188,7 @@ final class Text
             return new EmptyLine($cur->number, $rack, $count, $index);
         }
 
-        $line = new ItemLine($cur->number, $cur->typeName(), $count);
+        $line = new ItemLine($cur->number, $cur->typeRef(), $count);
         $more = $cur->nextElement();
 
         if ($more && $cur->peek() === '"') {
@@ -206,7 +212,7 @@ final class Text
             if ($c === ':' && $stage < 1) {
                 $cur->i++;
                 $line->chargeCount = $cur->count();
-                $line->charge = $cur->typeName();
+                $line->charge = $cur->typeRef();
                 $stage = 1;
             } elseif ($c === '+' && $stage < 2) {
                 $cur->i++;

@@ -13,7 +13,7 @@ final class FitBlock
     public function __construct(
         public readonly int $number,
         public readonly int $hullLine,
-        public ?string $hull = null,
+        public ?TypeRef $hull = null,
         public ?string $fitName = null,
         public ?string $mode = null,
         public array $lines = [],

@@ -12,6 +12,7 @@ use EveShipFit\EsfFormat\EsfRuleException;
 use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\State;
+use EveShipFit\EsfFormat\TypeRecord;
 
 /**
  * Canonical form (SPEC §8).
@@ -38,7 +39,7 @@ final class Canonical
     {
         $words = explode(' ', $name);
         $first = $words[0][0] ?? '';
-        if ($first === '' || $first === '-' || $first === '%' || Text::isCount($words[0])) {
+        if ($first === '' || $first === '-' || $first === '%' || Text::isCount($words[0]) || Text::endsInTypeId($name)) {
             return true;
         }
         foreach ($words as $word) {
@@ -52,6 +53,16 @@ final class Canonical
     public static function quoteType(string $name): string
     {
         return self::needsQuotes($name) ? self::quote($name) : $name;
+    }
+
+    /** A type as text: its name, and its ID where the name resolves to another type (SPEC §6.13). */
+    public static function typeRef(Catalog $catalog, TypeRecord $type): string
+    {
+        $name = self::quoteType($type->name);
+        if ($catalog->type(Names::fold($type->name))?->id === $type->id) {
+            return $name;
+        }
+        return "{$name}#{$type->id}";
     }
 
     /**
@@ -93,7 +104,8 @@ final class Canonical
             $modeText = Names::shortestUnique($own, self::without($others, $own));
         }
 
-        return new CanonFit($fit->hull, $fit->name(), $fit->mode, $modeText, $chunks);
+        $hullText = $fit->hull === null ? '-' : self::typeRef($catalog, $fit->hull);
+        return new CanonFit($fit->hull, $hullText, $fit->name(), $fit->mode, $modeText, $chunks);
     }
 
     /**
@@ -155,6 +167,7 @@ final class Canonical
     {
         $line = $item->line;
         $out = new CanonLine($item->type);
+        $out->typeText = self::typeRef($catalog, $item->type);
 
         if ($item->reference !== null) {
             $out->fitName = $item->reference->name();
@@ -162,6 +175,7 @@ final class Canonical
 
         if ($item->charge !== null) {
             $out->charge = $item->charge;
+            $out->chargeText = self::typeRef($catalog, $item->charge);
             $full = Lookup::fullLoad($item->type, $item->charge);
             if ($line->chargeCount !== null && $line->chargeCount !== $full) {
                 $out->chargeCount = $line->chargeCount;
@@ -288,6 +302,9 @@ final class Canonical
             if ($run->item === null) {
                 if ($last !== null && $last->type === null) {
                     $last->count = ($last->count ?? 1) + $run->length;
+                    if ($last->count > Text::UINT32_MAX) {
+                        throw new EsfRuleException("lines collapse into a count of {$last->count}, which is too large");
+                    }
                     continue;
                 }
                 $last = new CanonLine(null, $run->length === 1 ? null : $run->length, Resolver::TUBE);

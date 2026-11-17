@@ -140,6 +140,33 @@ final class Cursor
         }
     }
 
+    /** A type name, and the type ID after it if there is one (SPEC §6.13). */
+    public function typeRef(): TypeRef
+    {
+        if ($this->peek() === '"') {
+            $name = $this->quoted();
+            if (preg_match('/\G#([0-9]+)/', $this->s, $match, 0, $this->i) !== 1) {
+                return new TypeRef($name);
+            }
+            $this->i += strlen($match[0]);
+            return new TypeRef($name, $this->typeId($match[1]));
+        }
+        $name = $this->typeName();
+        if (preg_match(Text::NAME_WITH_ID, $name, $match) !== 1) {
+            return new TypeRef($name);
+        }
+        return new TypeRef($match[1], $this->typeId($match[2]));
+    }
+
+    private function typeId(string $digits): int
+    {
+        $digits = ltrim($digits, '0');
+        if (strlen($digits) > 10 || (int) $digits > Text::UINT32_MAX) {
+            $this->error('a type ID is too large');
+        }
+        return (int) $digits;
+    }
+
     /**
      * @return array{string, ?int}
      */

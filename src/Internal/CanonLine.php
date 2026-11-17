@@ -11,8 +11,10 @@ use EveShipFit\EsfFormat\TypeRecord;
 /** @internal */
 final class CanonLine
 {
+    public string $typeText = '-';
     public ?string $fitName = null;
     public ?TypeRecord $charge = null;
+    public ?string $chargeText = null;
     public ?int $chargeCount = null;
     public ?MutaplasmidRecord $mutaplasmid = null;
     public ?string $mutaplasmidName = null;
@@ -28,13 +30,13 @@ final class CanonLine
 
     public function body(): string
     {
-        $parts = [$this->type === null ? '-' : Canonical::quoteType($this->type->name)];
+        $parts = [$this->typeText];
         if ($this->fitName !== null) {
             $parts[] = Canonical::quote($this->fitName);
         }
-        if ($this->charge !== null) {
+        if ($this->chargeText !== null) {
             $count = $this->chargeCount === null ? '' : "{$this->chargeCount}x ";
-            $parts[] = ':' . $count . Canonical::quoteType($this->charge->name);
+            $parts[] = ':' . $count . $this->chargeText;
         }
         if ($this->mutaplasmidName !== null) {
             $parts[] = '+' . Canonical::quoteType($this->mutaplasmidName);
