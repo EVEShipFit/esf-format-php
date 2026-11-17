@@ -31,7 +31,7 @@ final class Esf
     public static function load(string $data, Catalog $catalog): array
     {
         if ($data === '') {
-            throw new EsfException('the document is empty');
+            throw new EsfFormatException('the document is empty');
         }
         $fits = self::isText($data)
             ? self::canonical(Text::parse($data), $catalog)
@@ -76,7 +76,7 @@ final class Esf
     {
         $encoded = trim($encoded, " \t\n\r\v\f");
         if (preg_match('/\A[A-Za-z0-9_-]*\z/', $encoded) !== 1 || strlen($encoded) % 4 === 1) {
-            throw new EsfException('not valid base64url');
+            throw new EsfFormatException('not valid base64url');
         }
         $padded = str_pad($encoded, (strlen($encoded) + 3) & ~3, '=');
         return (string) base64_decode(strtr($padded, '-_', '+/'), true);
@@ -116,7 +116,7 @@ final class Esf
                 throw $e;
             }
             [$fit, $entry] = $where[$e->lineNumber - 1];
-            throw new EsfException($e->reason, fitNumber: $fit, entryNumber: $entry);
+            throw $e->at($fit, $entry);
         }
     }
 }

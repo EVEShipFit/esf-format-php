@@ -7,6 +7,8 @@ namespace EveShipFit\EsfFormat\Internal;
 use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
+use EveShipFit\EsfFormat\EsfFormatException;
+use EveShipFit\EsfFormat\EsfRuleException;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\State;
 
@@ -76,12 +78,12 @@ final class Binary
                 continue;
             }
             if ($wire !== Wire::LEN) {
-                throw new EsfException('binary: Document.fits has the wrong wire type');
+                throw new EsfFormatException('binary: Document.fits has the wrong wire type');
             }
             $fits[] = self::decodeFit($reader->bytes());
         }
         if ($fits === []) {
-            throw new EsfException('binary: a document holds at least one fit');
+            throw new EsfFormatException('binary: a document holds at least one fit');
         }
         return $fits;
     }
@@ -168,11 +170,11 @@ final class Binary
             };
         }
         if (count($attributes) !== count($values)) {
-            throw new EsfException('binary: override fields have different lengths');
+            throw new EsfFormatException('binary: override fields have different lengths');
         }
         $e->overrides = array_combine($attributes, $values);
         if (count($e->overrides) !== count($attributes)) {
-            throw new EsfException('binary: an attribute is overridden twice');
+            throw new EsfRuleException('binary: an attribute is overridden twice');
         }
         return $e;
     }
@@ -196,7 +198,7 @@ final class Binary
             };
         }
         if ($version !== 1) {
-            throw new EsfException("binary: unsupported Fit.version {$version}");
+            throw new EsfFormatException("binary: unsupported Fit.version {$version}");
         }
         return $fit;
     }
@@ -204,7 +206,7 @@ final class Binary
     private static function uint32(int $value, string $what): int
     {
         if ($value < 0 || $value > Text::UINT32_MAX) {
-            throw new EsfException("binary: {$what} is out of range");
+            throw new EsfFormatException("binary: {$what} is out of range");
         }
         return $value;
     }
@@ -212,7 +214,7 @@ final class Binary
     private static function string(string $payload, string $what): ?string
     {
         if (preg_match('//u', $payload) !== 1) {
-            throw new EsfException("binary: {$what} is not valid UTF-8");
+            throw new EsfFormatException("binary: {$what} is not valid UTF-8");
         }
         return $payload === '' ? null : $payload;
     }
@@ -228,7 +230,7 @@ final class Binary
         $name = array_search($value, $numbers, true);
         if ($name === false) {
             $shown = sprintf('%u', $value);
-            throw new EsfException("binary: unknown {$what} value {$shown}");
+            throw new EsfFormatException("binary: unknown {$what} value {$shown}");
         }
         return $name;
     }
@@ -245,8 +247,8 @@ final class Binary
         return $name === null ? null : Location::from($name);
     }
 
-    private static function notInSchema(string $what): EsfException
+    private static function notInSchema(string $what): EsfFormatException
     {
-        return new EsfException("binary: {$what} has a field that is not in the schema");
+        return new EsfFormatException("binary: {$what} has a field that is not in the schema");
     }
 }

@@ -8,8 +8,11 @@ use EveShipFit\EsfFormat\AttributeRecord;
 use EveShipFit\EsfFormat\Catalog;
 use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\Esf;
+use EveShipFit\EsfFormat\EsfCatalogException;
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
+use EveShipFit\EsfFormat\EsfFormatException;
+use EveShipFit\EsfFormat\EsfRuleException;
 use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\MutaplasmidCatalog;
@@ -227,9 +230,19 @@ final class ApiTest extends TestCase
         try {
             Esf::save([self::fit(), self::fit(new Entry(self::AUTOCANNON), new Entry(999_999_999))], self::catalog());
             self::fail('no error');
-        } catch (EsfException $e) {
+        } catch (EsfCatalogException $e) {
             self::assertSame([2, 2, null], [$e->fitNumber, $e->entryNumber, $e->lineNumber]);
             self::assertStringStartsWith('fit 2, entry 2: ', $e->getMessage());
+        }
+    }
+
+    public function testErrorLocationOfAResolvedFit(): void
+    {
+        try {
+            Esf::save([self::fit(), new EsfFit(self::EMP)], self::catalog());
+            self::fail('no error');
+        } catch (EsfRuleException $e) {
+            self::assertSame("fit 2: 'Republic Fleet EMP S' is not a ship, structure or container", $e->getMessage());
         }
     }
 
@@ -238,7 +251,7 @@ final class ApiTest extends TestCase
         try {
             Esf::save([self::fit(), new EsfFit(self::RIFTER, mode: 999_999_999)], self::catalog());
             self::fail('no error');
-        } catch (EsfException $e) {
+        } catch (EsfCatalogException $e) {
             self::assertSame([2, null], [$e->fitNumber, $e->entryNumber]);
             self::assertStringStartsWith('fit 2: ', $e->getMessage());
         }
@@ -249,9 +262,30 @@ final class ApiTest extends TestCase
         try {
             Esf::load("%esf/1\nRifter\nNot A Type\n", self::catalog());
             self::fail('no error');
-        } catch (EsfException $e) {
+        } catch (EsfCatalogException $e) {
             self::assertSame(3, $e->lineNumber);
             self::assertSame("line 3: unknown type 'Not A Type'", $e->getMessage());
+        }
+    }
+
+    public function testErrorKinds(): void
+    {
+        $catalog = self::catalog();
+        $cases = [
+            [EsfFormatException::class, static fn() => Esf::load("%esf/1\n2x Rifter\n", $catalog)],
+            [EsfFormatException::class, static fn() => Esf::load("\x0A", $catalog)],
+            [EsfCatalogException::class, static fn() => Esf::load("%esf/1\nRifter\nDamage Control II {nope 1}\n", $catalog)],
+            [EsfRuleException::class, static fn() => Esf::load("%esf/1\nRifter\nDamage Control II @bay\n", $catalog)],
+            [EsfRuleException::class, static fn() => Esf::save([self::fit(new Entry(self::AUTOCANNON, count: 0))], $catalog)],
+            [EsfFormatException::class, static fn() => Esf::save([self::named("a\nb")], $catalog)],
+        ];
+        foreach ($cases as [$kind, $run]) {
+            try {
+                $run();
+                self::fail('no error');
+            } catch (EsfException $e) {
+                self::assertInstanceOf($kind, $e);
+            }
         }
     }
 
@@ -332,7 +366,7 @@ final class ApiTest extends TestCase
     #[DataProvider('invalidBase64Url')]
     public function testInvalidBase64Url(string $encoded): void
     {
-        $this->expectException(EsfException::class);
+        $this->expectException(EsfFormatException::class);
         Esf::fromBase64Url($encoded);
     }
 

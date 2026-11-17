@@ -8,6 +8,7 @@ use EveShipFit\EsfFormat\Catalog;
 use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
+use EveShipFit\EsfFormat\EsfRuleException;
 use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\State;
@@ -212,7 +213,7 @@ final class Canonical
                 $prev = $last[1];
                 $prev->count = ($prev->count ?? 1) + ($line->count ?? 1);
                 if ($prev->count > Text::UINT32_MAX) {
-                    throw new EsfException("lines collapse into a count of {$prev->count}, which is too large");
+                    throw new EsfRuleException("lines collapse into a count of {$prev->count}, which is too large");
                 }
                 continue;
             }
