@@ -68,7 +68,9 @@ final class InternalTest extends TestCase
         self::assertTrue(Canonical::needsQuotes('3x Damage Control'));
         self::assertTrue(Canonical::needsQuotes('Damage  Control'));
         self::assertTrue(Canonical::needsQuotes('Damage @Control'));
-        self::assertTrue(Canonical::needsQuotes('#85282'));
+        self::assertTrue(Canonical::needsQuotes('Foo#123'));
+        self::assertFalse(Canonical::needsQuotes('#85282'));
+        self::assertFalse(Canonical::needsQuotes('Swarm Overmind #0102'));
         self::assertFalse(Canonical::needsQuotes('#System'));
     }
 

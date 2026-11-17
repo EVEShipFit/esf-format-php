@@ -8,7 +8,7 @@ namespace EveShipFit\EsfFormat\Internal;
 final class ItemLine
 {
     public ?string $fitName = null;
-    public string|int|null $charge = null;
+    public ?TypeRef $charge = null;
     public ?int $chargeCount = null;
     public ?string $mutaplasmid = null;
     /** @var list<array{string, string}> */
@@ -19,7 +19,7 @@ final class ItemLine
 
     public function __construct(
         public readonly int $number,
-        public readonly string|int $name,
+        public readonly TypeRef $type,
         public readonly ?int $count = null,
     ) {}
 }

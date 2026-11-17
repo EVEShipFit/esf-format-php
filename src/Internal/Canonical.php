@@ -39,7 +39,7 @@ final class Canonical
     {
         $words = explode(' ', $name);
         $first = $words[0][0] ?? '';
-        if ($first === '' || $first === '-' || $first === '%' || Text::isCount($words[0]) || Text::isTypeId($name)) {
+        if ($first === '' || $first === '-' || $first === '%' || Text::isCount($words[0]) || Text::endsInTypeId($name)) {
             return true;
         }
         foreach ($words as $word) {
@@ -55,13 +55,14 @@ final class Canonical
         return self::needsQuotes($name) ? self::quote($name) : $name;
     }
 
-    /** A type as text: its name, or its ID where the name resolves to another type (SPEC §6.13). */
+    /** A type as text: its name, and its ID where the name resolves to another type (SPEC §6.13). */
     public static function typeRef(Catalog $catalog, TypeRecord $type): string
     {
+        $name = self::quoteType($type->name);
         if ($catalog->type(Names::fold($type->name))?->id === $type->id) {
-            return self::quoteType($type->name);
+            return $name;
         }
-        return "#{$type->id}";
+        return "{$name}#{$type->id}";
     }
 
     /**

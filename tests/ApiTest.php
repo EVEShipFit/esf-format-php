@@ -305,14 +305,17 @@ final class ApiTest extends TestCase
     {
         $rifter = self::fit(new Entry(self::AVATAR_UNPUBLISHED));
         $text = Esf::save([$rifter], self::catalog());
-        self::assertSame("%esf/1\nRifter\n\n#50097\n", $text);
+        self::assertSame("%esf/1\nRifter\n\nAvatar#50097\n", $text);
         self::assertEquals([$rifter], Esf::load($text, self::catalog()));
         self::assertEquals([$rifter], Esf::load(Esf::saveBinary([$rifter], self::catalog()), self::catalog()));
     }
 
     public function testLoadTypeId(): void
     {
-        $fits = Esf::load("%esf/1\n#587\n#2889 :#21898\n", self::catalog());
+        $fits = Esf::load(
+            "%esf/1\nRifter#587\n200mm AutoCannon II#2889 :Republic Fleet EMP S#21898\n",
+            self::catalog(),
+        );
         self::assertEquals([self::fit(new Entry(self::AUTOCANNON, charge: self::EMP))], $fits);
     }
 
@@ -328,9 +331,10 @@ final class ApiTest extends TestCase
             "%esf/1\nRifter\n4294967295x Damage Control II\n4294967295x Damage Control II\n",
             'too large',
         ];
-        yield 'type-id-huge' => ["%esf/1\nRifter\n#4294967296\n", 'type ID is too large'];
-        yield 'type-id-unknown' => ["%esf/1\nRifter\n#999999999\n", 'unknown type ID'];
-        yield 'type-id-largest' => ["%esf/1\nRifter\n#4294967295\n", 'unknown type ID'];
+        yield 'type-id-huge' => ["%esf/1\nRifter#4294967296\n", 'type ID is too large'];
+        yield 'type-id-unknown' => ["%esf/1\nRifter#999999999\n", 'unknown type ID'];
+        yield 'type-id-largest' => ["%esf/1\nRifter#4294967295\n", 'unknown type ID'];
+        yield 'type-id-wrong-name' => ["%esf/1\nRifter#605\n", "is 'Heron', not 'Rifter'"];
     }
 
     #[DataProvider('invalidDocuments')]

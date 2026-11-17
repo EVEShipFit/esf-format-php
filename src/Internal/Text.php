@@ -41,15 +41,16 @@ final class Text
     ];
     public const STORED = ['cargo', 'bay', ...self::HOLDS];
     public const UINT32_MAX = 0xFFFFFFFF;
+    public const NAME_WITH_ID = '/\A(.*[^ ])#([0-9]+)\z/su';
 
     public static function isCount(string $token): bool
     {
         return preg_match('/\A[0-9]+x\z/', $token) === 1;
     }
 
-    public static function isTypeId(string $name): bool
+    public static function endsInTypeId(string $name): bool
     {
-        return preg_match('/\A#[0-9]+\z/', $name) === 1;
+        return preg_match(self::NAME_WITH_ID, $name) === 1;
     }
 
     /**
