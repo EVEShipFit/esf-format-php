@@ -127,7 +127,7 @@ final class Resolver
         }
 
         $hull = self::type($catalog, $block->hull, $block->hullLine);
-        if ($hull->kind !== Kind::Hull && $hull->kind !== Kind::Container) {
+        if (!$hull->kind->canBeHull()) {
             throw new EsfException("'{$hull->name}' is not a ship, structure or container", $block->hullLine);
         }
 
@@ -170,7 +170,7 @@ final class Resolver
         $item = new Item($line, $t, self::defaultPlace($kind, $fit->cargoOnly));
 
         if ($line->fitName !== null) {
-            if ($kind !== Kind::Hull && $kind !== Kind::Container) {
+            if (!$kind->canBeHull()) {
                 throw new EsfException("'{$t->name}' cannot take a fit name", $n);
             }
             $matches = $named[$t->id][Names::fold($line->fitName)] ?? [];

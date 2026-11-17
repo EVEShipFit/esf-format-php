@@ -23,9 +23,10 @@ final class Entry
      *     in the squadron; null means a full squadron. A plugged-in implant or booster takes
      *     no count.
      * @param string|null $fitName The name of another fit in the same list, which this entry carries.
-     *     Only for a ship, structure or container. The other fit must have this entry's
-     *     `$type` as its hull and this as its name, ignoring case. For example, a Heron with
-     *     fit name "Scout" and Location::Frigate carries that fit in the Frigate Escape Bay.
+     *     Only for a type whose {@see Kind::canBeHull()} is true. The other fit must have
+     *     this entry's `$type` as its hull and this as its name, ignoring case. For example,
+     *     a Heron with fit name "Scout" and Location::Frigate carries that fit in the Frigate
+     *     Escape Bay.
      *     Null means an unfitted ship or an empty container.
      * @param int|null $charge The type ID of the charge loaded into this item, like ammunition or a script. Null for none.
      * @param int|null $chargeCount How many of `$charge` are loaded into each item.

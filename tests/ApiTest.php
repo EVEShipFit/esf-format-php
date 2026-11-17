@@ -10,6 +10,7 @@ use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\Esf;
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
+use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\MutaplasmidCatalog;
 use EveShipFit\EsfFormat\State;
@@ -93,6 +94,12 @@ final class ApiTest extends TestCase
             [self::fit(new Entry(self::AUTOCANNON, count: 2), new Entry(self::EMP))],
             Esf::load(Esf::save([$rifter], self::catalog()), self::catalog()),
         );
+    }
+
+    public function testOnlyHullsAndContainersCanBeHulls(): void
+    {
+        $hulls = array_values(array_filter(Kind::cases(), fn(Kind $k) => $k->canBeHull()));
+        $this->assertSame([Kind::Hull, Kind::Container], $hulls);
     }
 
     public function testLoadText(): void

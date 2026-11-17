@@ -61,4 +61,10 @@ enum Kind: string
 
     /** Anything else, like ore or a module without a slot. It goes in the cargo. */
     case Other = 'other';
+
+    /** Whether a type of this kind can be the hull of an {@see EsfFit}: true for {@see self::Hull} and {@see self::Container} only. */
+    public function canBeHull(): bool
+    {
+        return $this === self::Hull || $this === self::Container;
+    }
 }
