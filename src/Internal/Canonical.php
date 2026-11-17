@@ -301,6 +301,9 @@ final class Canonical
             if ($run->item === null) {
                 if ($last !== null && $last->type === null) {
                     $last->count = ($last->count ?? 1) + $run->length;
+                    if ($last->count > Text::UINT32_MAX) {
+                        throw new EsfRuleException("lines collapse into a count of {$last->count}, which is too large");
+                    }
                     continue;
                 }
                 $last = new CanonLine(null, $run->length === 1 ? null : $run->length, Resolver::TUBE);
