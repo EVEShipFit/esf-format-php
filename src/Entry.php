@@ -35,7 +35,7 @@ final class Entry
      * @param int|null $mutaplasmid The type ID of the mutaplasmid applied to this item, which makes it abyssal.
      *     `$type` is then the base type the mutaplasmid applies to, and `$overrides` holds the
      *     rolled values. Null for a normal item.
-     * @param array<int, float> $overrides Attribute values that replace the type's own, by attribute ID,
+     * @param array<int, float> $overrides Dogma attribute values that replace the type's own, by attribute ID,
      *     like `[20 => 524.0]` for speedFactor.
      *     Each value is the new base value, not a change on top of it. Attributes not listed
      *     keep the type's value. Empty for none.

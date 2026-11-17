@@ -15,7 +15,7 @@ final readonly class MutaplasmidRecord
 {
     /**
      * @param TypeRecord $type The mutaplasmid's own type: the type whose ID is the entry's `_key`.
-     * @param array<int, float> $rolls The attributes the mutaplasmid changes, each with the base type's
+     * @param array<int, float> $rolls The dogma attributes the mutaplasmid changes, each with the base type's
      *     value before the change, by attribute ID.
      *     The keys are the `_key` of each item in the entry's `attributeIDs`; its `min` and `max`
      *     are not needed. Each value is the base type's value of that attribute in `typeDogma.jsonl`.
