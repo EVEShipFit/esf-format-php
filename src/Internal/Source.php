@@ -6,8 +6,11 @@ namespace EveShipFit\EsfFormat\Internal;
 
 use EveShipFit\EsfFormat\Catalog;
 use EveShipFit\EsfFormat\Entry;
+use EveShipFit\EsfFormat\EsfCatalogException;
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
+use EveShipFit\EsfFormat\EsfFormatException;
+use EveShipFit\EsfFormat\EsfRuleException;
 
 /**
  * Fits as the text they stand for, and the check that their IDs match it (SPEC §10.2).
@@ -26,7 +29,7 @@ final class Source
     public static function source(array $fits, Catalog $catalog): array
     {
         if ($fits === []) {
-            throw new EsfException('a document holds at least one fit');
+            throw new EsfFormatException('a document holds at least one fit');
         }
         $out = '';
         $where = [];
@@ -35,7 +38,7 @@ final class Source
             try {
                 $out .= "%esf/1\n" . self::hull($fit, $catalog) . "\n";
             } catch (EsfException $e) {
-                throw new EsfException($e->reason, fitNumber: $n);
+                throw $e->at($n, null);
             }
             $where[] = [$n, null];
             $where[] = [$n, null];
@@ -43,7 +46,7 @@ final class Source
                 try {
                     $out .= self::entry($entry, $catalog) . "\n";
                 } catch (EsfException $e) {
-                    throw new EsfException($e->reason, fitNumber: $n, entryNumber: $j + 1);
+                    throw $e->at($n, $j + 1);
                 }
                 $where[] = [$n, $j + 1];
             }
@@ -66,7 +69,7 @@ final class Source
                 self::same($fit->hull?->id, $given->hull, 'hull');
                 self::same($fit->mode?->id, $given->mode, 'tactical mode');
             } catch (EsfException $e) {
-                throw new EsfException($e->reason, fitNumber: $i + 1);
+                throw $e->at($i + 1, null);
             }
             foreach ($fit->items as $j => $item) {
                 if ($item instanceof EmptySlot) {
@@ -82,10 +85,10 @@ final class Source
                     if ($got !== $want) {
                         $want = implode(', ', $want);
                         $got = implode(', ', $got);
-                        throw new EsfException("attribute IDs [{$want}] resolve to [{$got}]");
+                        throw new EsfRuleException("attribute IDs [{$want}] resolve to [{$got}]");
                     }
                 } catch (EsfException $e) {
-                    throw new EsfException($e->reason, fitNumber: $i + 1, entryNumber: $j + 1);
+                    throw $e->at($i + 1, $j + 1);
                 }
             }
         }
@@ -94,21 +97,21 @@ final class Source
     private static function name(string $text): string
     {
         if (strpbrk($text, "\r\n") !== false) {
-            throw new EsfException('a fit name contains CR or LF');
+            throw new EsfFormatException('a fit name contains CR or LF');
         }
         return Canonical::quote($text);
     }
 
     private static function typeName(Catalog $catalog, int $typeId, string $what): string
     {
-        $type = $catalog->typeById($typeId) ?? throw new EsfException("unknown {$what} type ID {$typeId}");
+        $type = $catalog->typeById($typeId) ?? throw new EsfCatalogException("unknown {$what} type ID {$typeId}");
         return Canonical::quoteType($type->name);
     }
 
     private static function number(float $value): string
     {
         if (!is_finite($value)) {
-            throw new EsfException('an override value is not finite');
+            throw new EsfRuleException('an override value is not finite');
         }
         return Number::format($value);
     }
@@ -116,20 +119,20 @@ final class Source
     private static function entry(Entry $e, Catalog $catalog): string
     {
         if (($e->count !== null && $e->count < 1) || ($e->chargeCount !== null && $e->chargeCount < 1)) {
-            throw new EsfException('a count must be at least 1');
+            throw new EsfRuleException('a count must be at least 1');
         }
         $rack = $e->location !== null && in_array($e->location->value, Text::PINNABLE, true);
         if ($e->slot !== null && $e->slot < 1) {
-            throw new EsfException('a slot must be at least 1');
+            throw new EsfRuleException('a slot must be at least 1');
         }
         if ($e->slot !== null && !$rack) {
-            throw new EsfException('a slot needs the rack it is in');
+            throw new EsfRuleException('a slot needs the rack it is in');
         }
         if ($e->type !== null && $e->slot === null && $rack) {
-            throw new EsfException('an item names a rack only to pin a slot');
+            throw new EsfRuleException('an item names a rack only to pin a slot');
         }
         if ($e->chargeCount !== null && $e->charge === null) {
-            throw new EsfException('a charge count is set without a charge');
+            throw new EsfRuleException('a charge count is set without a charge');
         }
 
         $parts = [];
@@ -151,7 +154,7 @@ final class Source
             $pairs = [];
             foreach ($e->overrides as $attributeId => $value) {
                 $attribute = $catalog->attributeById($attributeId)
-                    ?? throw new EsfException("unknown attribute ID {$attributeId}");
+                    ?? throw new EsfCatalogException("unknown attribute ID {$attributeId}");
                 $pairs[] = $attribute->name . ' ' . self::number($value);
             }
             $parts[] = '{' . implode(', ', $pairs) . '}';
@@ -182,7 +185,7 @@ final class Source
         if ($got !== $want) {
             $want ??= 'null';
             $got ??= 'null';
-            throw new EsfException("{$what} ID {$want} is not what its name resolves to ({$got})");
+            throw new EsfRuleException("{$what} ID {$want} is not what its name resolves to ({$got})");
         }
     }
 }

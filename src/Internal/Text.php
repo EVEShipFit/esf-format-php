@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat\Internal;
 
 use EveShipFit\EsfFormat\EsfException;
+use EveShipFit\EsfFormat\EsfFormatException;
 
 /**
  * Reading the text form into lines, without a Catalog (SPEC §4.1, grammar.ebnf).
@@ -61,7 +62,7 @@ final class Text
         if (preg_match('//u', $data) !== 1) {
             foreach ($lines as $n => $raw) {
                 if (preg_match('//u', $raw) !== 1) {
-                    throw new EsfException('not valid UTF-8', $n + 1);
+                    throw new EsfFormatException('not valid UTF-8', $n + 1);
                 }
             }
         }
@@ -76,22 +77,22 @@ final class Text
                 $raw = substr($raw, 0, -1);
             }
             if (str_contains($raw, "\r")) {
-                throw new EsfException('a CR must be followed by an LF', $number);
+                throw new EsfFormatException('a CR must be followed by an LF', $number);
             }
 
             $stripped = ltrim($raw, ' ');
             if (str_starts_with($stripped, '%')) {
                 if (preg_match('/\A *%([a-z][a-z0-9-]*)\/([0-9]+) *\z/', $raw, $match) !== 1) {
-                    throw new EsfException('malformed header', $number);
+                    throw new EsfFormatException('malformed header', $number);
                 }
                 if ($header !== null) {
-                    throw new EsfException('a fit needs a hull line', $header);
+                    throw new EsfFormatException('a fit needs a hull line', $header);
                 }
                 $inBlock = true;
                 $current = null;
                 if ($match[1] === 'esf') {
                     if ($match[2] !== '1') {
-                        throw new EsfException("unsupported version esf/{$match[2]}", $number);
+                        throw new EsfFormatException("unsupported version esf/{$match[2]}", $number);
                     }
                     $header = $number;
                 }
@@ -99,7 +100,7 @@ final class Text
             }
 
             if (!$inBlock) {
-                throw new EsfException('a document starts with a header', $number);
+                throw new EsfFormatException('a document starts with a header', $number);
             }
             if ($stripped === '' || str_starts_with($stripped, '//')) {
                 continue;
@@ -116,10 +117,10 @@ final class Text
         }
 
         if ($header !== null) {
-            throw new EsfException('a fit needs a hull line', $header);
+            throw new EsfFormatException('a fit needs a hull line', $header);
         }
         if ($fits === []) {
-            throw new EsfException('a document holds at least one fit');
+            throw new EsfFormatException('a document holds at least one fit');
         }
         return $fits;
     }

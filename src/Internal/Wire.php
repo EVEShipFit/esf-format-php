@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat\Internal;
 
 use EveShipFit\EsfFormat\EsfException;
+use EveShipFit\EsfFormat\EsfFormatException;
 
 /**
  * The Protocol Buffers wire format.
@@ -77,7 +78,7 @@ final class Wire
     public static function unpackDoubles(string $payload): array
     {
         if (strlen($payload) % 8 !== 0) {
-            throw new EsfException('binary: not valid Protocol Buffers (packed doubles cut short)');
+            throw new EsfFormatException('binary: not valid Protocol Buffers (packed doubles cut short)');
         }
         /** @var array<int, float> $values */
         $values = unpack('e*', $payload);
