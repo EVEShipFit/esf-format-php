@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace EveShipFit\EsfFormat\Tests;
 
+use Devium\Toml\Toml;
+use EveShipFit\EsfFormat\BinaryExtra;
 use EveShipFit\EsfFormat\Esf;
 use EveShipFit\EsfFormat\EsfException;
+use EveShipFit\EsfFormat\TextExtra;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -39,6 +42,11 @@ final class ConformanceTest extends TestCase
         $catalog = ApiTest::catalog();
         $input = self::input($path);
         if (str_contains($path, '/invalid/')) {
+            try {
+                Esf::loadDocument($input, $catalog);
+                self::fail('loadDocument() accepts an invalid case');
+            } catch (EsfException) {
+            }
             $this->expectException(EsfException::class);
             Esf::load($input, $catalog);
             return;
@@ -51,5 +59,27 @@ final class ConformanceTest extends TestCase
         self::assertSame($canonical, Esf::save(Esf::load($canonical, $catalog), $catalog), 'canonical of canonical.esf');
         self::assertSame(bin2hex($binary), bin2hex(Esf::saveBinary($fits, $catalog)), 'binary of input');
         self::assertSame($canonical, Esf::save(Esf::load($binary, $catalog), $catalog), 'canonical of canonical.b64');
+
+        $document = Esf::loadDocument($input, $catalog);
+        self::assertEquals($fits, $document->fits, 'fits of loadDocument()');
+        self::assertEquals(self::extra($path), $document->extra, 'extra of loadDocument()');
+    }
+
+    /**
+     * @return list<TextExtra|BinaryExtra>
+     */
+    private static function extra(string $path): array
+    {
+        if (!is_file("{$path}/extra.toml")) {
+            return [];
+        }
+        /** @var array{extra: list<array{name: string, version: int, text: string}|array{field: int, bytes: string}>} $toml */
+        $toml = Toml::decode((string) file_get_contents("{$path}/extra.toml"), true);
+        return array_map(
+            static fn($e) => isset($e['field'])
+                ? new BinaryExtra($e['field'], Esf::fromBase64Url($e['bytes']))
+                : new TextExtra($e['name'], $e['version'], $e['text']),
+            $toml['extra'],
+        );
     }
 }

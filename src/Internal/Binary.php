@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace EveShipFit\EsfFormat\Internal;
 
+use EveShipFit\EsfFormat\BinaryExtra;
 use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFit;
@@ -69,10 +70,26 @@ final class Binary
      */
     public static function decode(string $data): array
     {
+        return self::document($data, false)[0];
+    }
+
+    /**
+     * Read the fits and, if $keep, the other length-delimited fields.
+     *
+     * @return array{list<EsfFit>, list<BinaryExtra>}
+     * @throws EsfException
+     */
+    public static function document(string $data, bool $keep): array
+    {
         $fits = [];
+        $extra = [];
         $reader = new Reader($data);
         while (!$reader->done()) {
             [$field, $wire] = $reader->key();
+            if ($field !== 1 && $wire === Wire::LEN && $keep) {
+                $extra[] = new BinaryExtra($field, $reader->bytes());
+                continue;
+            }
             if ($field !== 1) {
                 $reader->skip($field, $wire);
                 continue;
@@ -85,7 +102,7 @@ final class Binary
         if ($fits === []) {
             throw new EsfFormatException('binary: a document holds at least one fit');
         }
-        return $fits;
+        return [$fits, $extra];
     }
 
     private static function encodeEntry(Entry $entry): string

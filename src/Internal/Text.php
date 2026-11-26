@@ -6,6 +6,7 @@ namespace EveShipFit\EsfFormat\Internal;
 
 use EveShipFit\EsfFormat\EsfException;
 use EveShipFit\EsfFormat\EsfFormatException;
+use EveShipFit\EsfFormat\TextExtra;
 
 /**
  * Reading the text form into lines, without a Catalog (SPEC §4.1, grammar.ebnf).
@@ -61,6 +62,17 @@ final class Text
      */
     public static function parse(string $data): array
     {
+        return self::document($data, false)[0];
+    }
+
+    /**
+     * Split a text document into fits and, if $keep, the other blocks.
+     *
+     * @return array{list<FitBlock>, list<TextExtra>}
+     * @throws EsfException
+     */
+    public static function document(string $data, bool $keep): array
+    {
         $lines = explode("\n", $data);
         if (end($lines) === '') {
             array_pop($lines);
@@ -74,11 +86,16 @@ final class Text
         }
 
         $fits = [];
+        $extra = [];
         $current = null;
         $header = null;
         $inBlock = false;
+        $foreign = null;
+        $offset = 0;
         foreach ($lines as $n => $raw) {
             $number = $n + 1;
+            $start = $offset;
+            $offset += strlen($raw) + 1;
             if (str_ends_with($raw, "\r")) {
                 $raw = substr($raw, 0, -1);
             }
@@ -96,11 +113,21 @@ final class Text
                 }
                 $inBlock = true;
                 $current = null;
+                if ($foreign !== null) {
+                    $extra[] = self::foreign($data, $foreign, $start);
+                    $foreign = null;
+                }
                 if ($match[1] === 'esf') {
                     if ($match[2] !== '1') {
                         throw new EsfFormatException("unsupported version esf/{$match[2]}", $number);
                     }
                     $header = $number;
+                } elseif ($keep) {
+                    $version = ltrim($match[2], '0');
+                    if (strlen($version) > 10 || (int) $version > self::UINT32_MAX) {
+                        throw new EsfFormatException('the block version is out of range', $number);
+                    }
+                    $foreign = [$match[1], (int) $version, $offset];
                 }
                 continue;
             }
@@ -125,10 +152,22 @@ final class Text
         if ($header !== null) {
             throw new EsfFormatException('a fit needs a hull line', $header);
         }
+        if ($foreign !== null) {
+            $extra[] = self::foreign($data, $foreign, strlen($data));
+        }
         if ($fits === []) {
             throw new EsfFormatException('a document holds at least one fit');
         }
-        return $fits;
+        return [$fits, $extra];
+    }
+
+    /**
+     * @param array{string, int, int} $block name, version and where its text starts
+     */
+    private static function foreign(string $data, array $block, int $end): TextExtra
+    {
+        [$name, $version, $start] = $block;
+        return new TextExtra($name, $version, (string) substr($data, $start, max(0, $end - $start)));
     }
 
     private static function hull(int $header, Cursor $cur): FitBlock
