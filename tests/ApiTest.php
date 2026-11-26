@@ -194,6 +194,20 @@ final class ApiTest extends TestCase
         Esf::loadDocument($data, self::catalog());
     }
 
+    public function testOnlyLoadDocumentRejectsAHugeVersion(): void
+    {
+        $data = "%esf/1\nRifter\n%fleet/99999999999\n";
+        self::assertCount(1, Esf::load($data, self::catalog()));
+        $this->expectException(EsfFormatException::class);
+        Esf::loadDocument($data, self::catalog());
+    }
+
+    public function testLoadDocumentLeadingZeros(): void
+    {
+        $document = Esf::loadDocument("%esf/1\nRifter\n%fleet/007\n", self::catalog());
+        self::assertEquals([new TextExtra('fleet', 7, '')], $document->extra);
+    }
+
     public function testLoadDocumentLargestVersion(): void
     {
         $document = Esf::loadDocument("%fleet/4294967295\n%esf/1\nRifter\n", self::catalog());

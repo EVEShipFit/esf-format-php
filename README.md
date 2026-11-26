@@ -188,7 +188,7 @@ Only a ship, structure or container can be a fit's hull. Check
 The test cases live in [esf-format](https://github.com/EVEShipFit/esf-format):
 
 ```
-git clone --branch v1.3 https://github.com/EVEShipFit/esf-format
+git clone --branch load-document https://github.com/EVEShipFit/esf-format
 composer install
 uv run --project esf-format/tools esf-test -- php tests/program.php
 composer lint
