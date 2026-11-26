@@ -12,6 +12,8 @@ use EveShipFit\EsfFormat\Internal\Names;
 use EveShipFit\EsfFormat\Internal\Resolver;
 use EveShipFit\EsfFormat\Internal\Source;
 use EveShipFit\EsfFormat\Internal\Text;
+use EveShipFit\EsfFormat\Internal\Wire;
+use InvalidArgumentException;
 
 /** Read and write esf/1 (https://github.com/EVEShipFit/esf-format). */
 final class Esf
@@ -40,6 +42,33 @@ final class Esf
     }
 
     /**
+     * Read a text or binary document, and keep what is not a fit.
+     *
+     * The fits are the same as {@see Esf::load()} returns. The extra data is every text block
+     * that is not a fit, like `%fleet/1`, and every field of a binary document that is not a fit
+     * and is written the way {@see Esf::binaryField()} writes it. Other kinds of binary field are
+     * skipped. The extra data comes in the order the document has it.
+     * To write it back, add it to what {@see Esf::save()} or {@see Esf::saveBinary()} returns:
+     * text blocks after the text, and binary fields, through {@see Esf::binaryField()}, after the binary.
+     *
+     * @throws EsfException Like {@see Esf::load()}, and also when a block's version is above 4294967295.
+     */
+    public static function loadDocument(string $data, Catalog $catalog): Document
+    {
+        if ($data === '') {
+            throw new EsfFormatException('the document is empty');
+        }
+        if (self::isText($data)) {
+            [$blocks, $extra] = Text::document($data, true);
+            $fits = self::canonical($blocks, $catalog);
+        } else {
+            [$decoded, $extra] = Binary::document($data, true);
+            $fits = self::checked($decoded, $catalog);
+        }
+        return new Document(array_map(Canonical::toModel(...), $fits), $extra);
+    }
+
+    /**
      * Write fits as canonical text (§8).
      *
      * @param list<EsfFit> $fits
@@ -59,6 +88,24 @@ final class Esf
     public static function saveBinary(array $fits, Catalog $catalog): string
     {
         return Binary::encode(array_map(Canonical::toModel(...), self::checked($fits, $catalog)));
+    }
+
+    /**
+     * Write one field of a binary document.
+     *
+     * Add the result to what {@see Esf::saveBinary()} returns, to store more data next to the fits.
+     * {@see Esf::loadDocument()} gives it back as a {@see BinaryExtra}.
+     *
+     * @param int $field The field number, from 2 to 536870911. Field 1 holds the fits.
+     * @param string $bytes The content of the field, as a binary string.
+     * @throws InvalidArgumentException When the field number is not in that range.
+     */
+    public static function binaryField(int $field, string $bytes): string
+    {
+        if ($field < 2 || $field > Wire::FIELD_MAX) {
+            throw new InvalidArgumentException("field {$field} is not a field number from 2 to " . Wire::FIELD_MAX);
+        }
+        return Wire::record($field, $bytes);
     }
 
     /** The binary form as base64url without padding, for URLs (§10.4). */

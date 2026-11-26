@@ -20,6 +20,7 @@ final class Wire
     public const SGROUP = 3;
     public const EGROUP = 4;
     public const I32 = 5;
+    public const FIELD_MAX = 0x1FFFFFFF;
 
     public static function varint(int $value): string
     {

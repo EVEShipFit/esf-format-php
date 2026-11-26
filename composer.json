@@ -11,6 +11,7 @@
         "ext-mbstring": "*"
     },
     "require-dev": {
+        "devium/toml": "^1.1",
         "friendsofphp/php-cs-fixer": "^3.64",
         "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^11.5 || ^12.0"

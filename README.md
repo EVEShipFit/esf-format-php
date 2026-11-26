@@ -57,6 +57,43 @@ Catch a subclass to handle one kind of error:
 | `EsfCatalogException` | The catalog does not know a name or ID, or a name matches more than one type. |
 | `EsfRuleException` | The fit breaks a rule, like a module in the wrong rack. |
 
+## Other data in a document
+
+A document can hold more than fits. A text document can have blocks for other
+formats, like `%fleet/1`; a binary document can have other fields. `load()`
+skips them. `loadDocument()` gives them back:
+
+```php
+use EveShipFit\EsfFormat\BinaryExtra;
+use EveShipFit\EsfFormat\TextExtra;
+
+$document = Esf::loadDocument($data, $catalog);
+$document->fits; // the same as load() returns
+foreach ($document->extra as $extra) {
+    if ($extra instanceof TextExtra) {
+        // $extra->name is 'fleet', $extra->version is 1, $extra->text is the block after its header line
+    } else {
+        // a BinaryExtra: $extra->field is the field number, $extra->bytes its content
+    }
+}
+```
+
+They come in document order. A text block's `text` is exactly as written. A
+binary document only gives back fields written the way `binaryField()` writes
+them; it skips other kinds. `loadDocument()` throws `EsfFormatException` for a
+block version above 4294967295, which `load()` accepts.
+
+To write them, add them to the saved document. Joined documents are one
+document:
+
+```php
+$text = Esf::save($fits, $catalog) . "%fleet/1\n" . $fleet;
+$data = Esf::saveBinary($fits, $catalog) . Esf::binaryField(2, $fleet);
+```
+
+`binaryField()` takes a field number from 2 to 536870911; field 1 holds the
+fits. It throws `InvalidArgumentException` for any other number.
+
 ## Fits
 
 An `EsfFit` is one fit: `hull`, `name`, tactical `mode` and its `entries`.
@@ -151,7 +188,7 @@ Only a ship, structure or container can be a fit's hull. Check
 The test cases live in [esf-format](https://github.com/EVEShipFit/esf-format):
 
 ```
-git clone --branch v1.0 https://github.com/EVEShipFit/esf-format
+git clone --branch v1.3 https://github.com/EVEShipFit/esf-format
 composer install
 uv run --project esf-format/tools esf-test -- php tests/program.php
 composer lint

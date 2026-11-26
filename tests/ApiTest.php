@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EveShipFit\EsfFormat\Tests;
 
 use EveShipFit\EsfFormat\AttributeRecord;
+use EveShipFit\EsfFormat\BinaryExtra;
 use EveShipFit\EsfFormat\Catalog;
 use EveShipFit\EsfFormat\Entry;
 use EveShipFit\EsfFormat\Esf;
@@ -17,7 +18,9 @@ use EveShipFit\EsfFormat\Kind;
 use EveShipFit\EsfFormat\Location;
 use EveShipFit\EsfFormat\MutaplasmidCatalog;
 use EveShipFit\EsfFormat\State;
+use EveShipFit\EsfFormat\TextExtra;
 use EveShipFit\EsfFormat\TypeRecord;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -134,6 +137,85 @@ final class ApiTest extends TestCase
             Esf::load(Esf::save($fits, self::catalog()), self::catalog()),
             Esf::load(Esf::saveBinary($fits, self::catalog()), self::catalog()),
         );
+    }
+
+    public function testBinaryFieldRoundTrip(): void
+    {
+        $fits = [self::fit(new Entry(self::DAMAGE_CONTROL))];
+        $data = Esf::saveBinary($fits, self::catalog())
+            . Esf::binaryField(2, "\x00\xFF fleet")
+            . Esf::binaryField(536870911, '')
+            . Esf::binaryField(3, str_repeat('x', 300));
+        $document = Esf::loadDocument($data, self::catalog());
+        self::assertEquals(Esf::load($data, self::catalog()), $document->fits);
+        self::assertEquals(
+            [new BinaryExtra(2, "\x00\xFF fleet"), new BinaryExtra(536870911, ''), new BinaryExtra(3, str_repeat('x', 300))],
+            $document->extra,
+        );
+    }
+
+    public function testLoadDocumentSkipsOtherWireTypes(): void
+    {
+        $fit = Esf::saveBinary([self::fit()], self::catalog());
+        // field 2 varint, field 3 group holding a length-delimited field 4, field 5 fixed64
+        $data = "\x10\x05" . "\x1B\x22\x01A\x1C" . $fit . "\x29" . str_repeat("\x00", 8);
+        self::assertSame([], Esf::loadDocument($data, self::catalog())->extra);
+    }
+
+    public function testLoadDocumentText(): void
+    {
+        $data = "%fleet/1\r\nwing\r\n%esf/1\nRifter\n  %x/0042  \n\n// c\n%y/1";
+        $document = Esf::loadDocument($data, self::catalog());
+        self::assertEquals(Esf::load($data, self::catalog()), $document->fits);
+        self::assertEquals(
+            [new TextExtra('fleet', 1, "wing\r\n"), new TextExtra('x', 42, "\n// c\n"), new TextExtra('y', 1, '')],
+            $document->extra,
+        );
+        self::assertSame([], Esf::loadDocument("%esf/1\nRifter\n", self::catalog())->extra);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function invalidDocumentsWithExtra(): iterable
+    {
+        yield 'esf-version' => ["%fleet/1\n%esf/2\nRifter\n", 'unsupported version esf/2'];
+        yield 'version-too-large' => ["%fleet/4294967296\n%esf/1\nRifter\n", 'out of range'];
+        yield 'no-fit' => ["%fleet/1\nwing\n", 'at least one fit'];
+        yield 'binary-no-fit' => [Esf::binaryField(2, 'x'), 'at least one fit'];
+        yield 'empty' => ['', 'empty'];
+    }
+
+    #[DataProvider('invalidDocumentsWithExtra')]
+    public function testLoadDocumentInvalid(string $data, string $message): void
+    {
+        $this->expectException(EsfFormatException::class);
+        $this->expectExceptionMessage($message);
+        Esf::loadDocument($data, self::catalog());
+    }
+
+    public function testLoadDocumentLargestVersion(): void
+    {
+        $document = Esf::loadDocument("%fleet/4294967295\n%esf/1\nRifter\n", self::catalog());
+        self::assertEquals([new TextExtra('fleet', 4294967295, '')], $document->extra);
+    }
+
+    /**
+     * @return iterable<string, array{int}>
+     */
+    public static function invalidFields(): iterable
+    {
+        yield 'zero' => [0];
+        yield 'fits' => [1];
+        yield 'negative' => [-1];
+        yield 'too-large' => [536870912];
+    }
+
+    #[DataProvider('invalidFields')]
+    public function testBinaryFieldInvalid(int $field): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        Esf::binaryField($field, '');
     }
 
     /**
